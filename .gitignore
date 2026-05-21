@@ -1,0 +1,44 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# Environment
+.env
+.env.*
+
+# Laravel cache & logs
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/bootstrap/cache/*
+
+# Build files
+/public/build
+/public/hot
+
+# IDE
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# PHPUnit
+.phpunit.result.cache
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Uploads
+/public/uploads/*
+!/public/uploads/.gitignore
+
+# Ignore secrets
+installer/database.sql
+core/.env
+core/vendor/
+core/node_modules/
