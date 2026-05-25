@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 
 class ItemRequest extends FormRequest
 {
+    use Concerns\SanitizesInput;
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -20,6 +21,8 @@ class ItemRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $this->trimStrings(['name', 'slug', 'sku', 'meta_keywords', 'meta_description']);
+
         if ($this->has('complete_the_look_ids') && is_string($this->input('complete_the_look_ids'))) {
             $this->merge([
                 'complete_the_look_ids' => Item::parseCompleteTheLookIds($this->input('complete_the_look_ids')),
@@ -83,7 +86,10 @@ class ItemRequest extends FormRequest
             'previous_price'  => 'max:50',
             'stock'           => 'numeric|max:9999999999',
             'tax_id'          => 'required',
-            'photo'           => $required, 'mimes:jpeg,jpg,png,svg',
+            'photo'           => array_merge(
+                $this->item ? ['nullable'] : ['required'],
+                ['file', 'image', 'mimes:jpeg,jpg,png,webp,svg', 'max:4096']
+            ),
             'pdp_metal_images_rose' => 'nullable|array',
             'pdp_metal_images_rose.*' => 'nullable|mimes:jpeg,jpg,png,webp',
             'pdp_metal_images_white' => 'nullable|array',

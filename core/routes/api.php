@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthTokenController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,9 +15,16 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::post('/tokens/create', [AuthTokenController::class, 'store'])
+    ->middleware('throttle:api-sensitive')
+    ->name('api.tokens.create');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    })->name('api.user');
+
+    Route::get('/internal/ping', function () {
+        return response()->json(['status' => 'ok']);
+    })->name('api.internal.ping');
 });
-
-
-

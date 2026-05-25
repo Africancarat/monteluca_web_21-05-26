@@ -30,13 +30,13 @@ class EmailSendJob implements ShouldQueue
      */
     public function handle(): void
     {
-        if ($this->type == 'template') {
-            $email = new EmailHelper();
-            $email->sendTemplateMail($this->emailData);
-            Log::info('Email sent');
-        } else {
-            $email = new EmailHelper();
-            $email->sendCustomMail($this->emailData);
+        $email = new EmailHelper();
+        $ok = $this->type === 'template'
+            ? $email->sendTemplateMail($this->emailData)
+            : $email->sendCustomMail($this->emailData);
+
+        if ($ok) {
+            Log::info('Queued email sent', ['to' => $this->emailData['to'] ?? null]);
         }
     }
 }

@@ -8,6 +8,7 @@ use App\{
     Http\Requests\AdminRequest,
     Http\Controllers\Controller
 };
+use App\Support\ValidationRules;
 use Illuminate\Http\Request;
 
 class StaffController extends Controller
@@ -61,10 +62,16 @@ class StaffController extends Controller
         $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|unique:admins|email',
-            'phone' => 'required|max:20',
-            'password' => 'required|min:4|max:20',
+            'phone' => ValidationRules::phone('phone')['phone'],
+            'password' => ValidationRules::strongPassword(),
             'role_id' => 'required',
             'photo' => 'required|image',
+        ], [
+            'phone.digits' => __('Phone number must contain exactly 10 digits.'),
+            'password.mixed' => __('Password must contain uppercase and lowercase letters.'),
+            'password.numbers' => __('Password must contain at least one number.'),
+            'password.symbols' => __('Password must contain at least one symbol.'),
+            'password.uncompromised' => __('This password has appeared in a data breach. Please choose a different password.'),
         ]);
         $this->repository->store($request);
         return redirect()->route('back.staff.index')->withSuccess(__('New User Added Successfully.'));
@@ -97,10 +104,16 @@ class StaffController extends Controller
         $request->validate([
             'name' => 'required|max:255',
             'email' => 'required|unique:admins,email,'.$staff->id,
-            'phone' => 'required|max:20',
-            'password' => 'min:4|max:20',
+            'phone' => ValidationRules::phone('phone')['phone'],
+            'password' => ValidationRules::strongPassword(false),
             'role_id' => 'required',
             'photo' => 'image',
+        ], [
+            'phone.digits' => __('Phone number must contain exactly 10 digits.'),
+            'password.mixed' => __('Password must contain uppercase and lowercase letters.'),
+            'password.numbers' => __('Password must contain at least one number.'),
+            'password.symbols' => __('Password must contain at least one symbol.'),
+            'password.uncompromised' => __('This password has appeared in a data breach. Please choose a different password.'),
         ]);
         $this->repository->update($staff, $request);
         return redirect()->route('back.staff.index')->withSuccess(__('User Updated Successfully.'));

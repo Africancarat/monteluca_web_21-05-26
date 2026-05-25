@@ -143,14 +143,8 @@ class AccountController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function updatePassword(Request $request)
+    public function updatePassword(\App\Http\Requests\AdminPasswordUpdateRequest $request)
     {
-        $request->validate([
-            'current_password' => 'required|min:4|max:16',
-            'new_password' => 'required|min:4|max:16',
-            'renew_password' => 'required|min:4|max:16',
-        ]);
-
         $resp = $this->repository->updatePassword($request);
 
         if($resp['status']){

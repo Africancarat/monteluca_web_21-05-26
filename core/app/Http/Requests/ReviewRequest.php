@@ -11,32 +11,30 @@ use Illuminate\{
 
 class ReviewRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
+    use Concerns\SanitizesInput;
+
+    public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
+    protected function prepareForValidation(): void
     {
-        return [
-            'rating' => 'required',
-            'review' => 'required',
-            'subject' => 'required|string|max:220',
-            'occasion' => 'nullable|string|max:60',
-            'ring_size_ordered' => 'nullable|string|max:48',
-            'metal_type_ordered' => 'nullable|string|max:80',
-            'review_photo' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:4096',
-        ];
+        $this->trimStrings(['subject', 'occasion', 'ring_size_ordered', 'metal_type_ordered']);
+        $this->stripHtml('review');
+    }
+
+    public function rules(): array
+    {
+        return array_merge(
+            ['rating' => ['required', 'integer', 'min:1', 'max:5']],
+            ['review' => ['required', 'string', 'max:5000']],
+            ['subject' => ['required', 'string', 'max:220']],
+            ['occasion' => ['nullable', 'string', 'max:60']],
+            ['ring_size_ordered' => ['nullable', 'string', 'max:48']],
+            ['metal_type_ordered' => ['nullable', 'string', 'max:80']],
+            ['review_photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:4096']],
+        );
     }
 
     /**

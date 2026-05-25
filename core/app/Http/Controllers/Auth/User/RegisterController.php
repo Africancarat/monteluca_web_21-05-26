@@ -2,82 +2,52 @@
 
 namespace App\Http\Controllers\Auth\User;
 
-use App\{
-    Http\Requests\UserRequest,
-    Http\Controllers\Controller,
-    Repositories\Front\UserRepository
-};
-use App\Models\Setting;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Config;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\RegisterRequest;
+use App\Repositories\Front\UserRepository;
+use App\Support\EmailVerification;
+use App\Support\Recaptcha;
 use Illuminate\Support\Facades\Session;
 
 class RegisterController extends Controller
 {
-    protected $repository;
-
-    /**
-     * Constructor Method.
-     *
-     * Setting Authentication
-     *
-     * @param  \App\Repositories\Back\UserRepository $repository
-     *
-     */
-    public function __construct(UserRepository $repository)
-    {
-        $this->repository = $repository;
-
-        $setting = Setting::first();
-        if ($setting->recaptcha == 1) {
-          Config::set('captcha.sitekey', $setting->google_recaptcha_site_key);
-          Config::set('captcha.secret', $setting->google_recaptcha_secret_key);
-          
-        }
+    public function __construct(
+        protected UserRepository $repository
+    ) {
+        Recaptcha::applySiteConfig();
     }
-
 
     public function showForm()
     {
-
-      return view('user.auth.register');
+        return view('user.auth.register');
     }
 
-
-    public function register(UserRequest $request)
-    {   
-     
+    public function register(RegisterRequest $request)
+    {
         $this->repository->register($request);
 
-        $setting = Setting::first();
-        if($setting->is_mail_verify == 0){
-            Session::flash('success',__('Account Register Successfully please login'));
+        if (! EmailVerification::isRequired()) {
+            Session::flash('success', __('Account registered successfully. Please log in.'));
+
             return redirect()->route('user.login');
-        }else{
-            Session::flash('success',__('Account Register Successfully please check your email for verification'));
-            return redirect()->route('user.verify');
         }
-        
-        
+
+        Session::flash(
+            'success',
+            __('Account created. Please check your email and click the verification link to activate your account.')
+        );
+
+        return redirect()->route('verification.notice');
     }
-    
 
-
+    /** @deprecated Legacy OTP link redirects to the signed-link flow. */
     public function verify($token)
     {
-        $user = User::where('email_token',$token)->first();
-       
-        if($user){
-            
-            Auth::login($user);
-            
-            return redirect(route('user.dashboard'));
-        }else{
-            return redirect(route('user.login'));
-        }
+        Session::flash(
+            'error',
+            __('Please use the verification link sent to your email. You can request a new link below.')
+        );
+
+        return redirect()->route('verification.notice');
     }
-
-
-
 }

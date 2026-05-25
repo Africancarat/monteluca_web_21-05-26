@@ -107,61 +107,147 @@ class SettingController extends Controller
         return view('back.settings.storage');
     }
     
-   public function storageLink(Request $request)
+    public function storageLink(Request $request)
     {
-        $path = public_path('storage');
-    
-        if (!file_exists($path)) {
-            Artisan::call('storage:link');
-            return redirect()->back()->withSuccess(__('Storage connected successfully.'));
+        $linkPath = public_path('storage');
+        $diskRoot = storage_path('app/public');
+
+        if (! is_dir($diskRoot)) {
+            mkdir($diskRoot, 0755, true);
         }
-    
-        // Detect if it's a junction or symlink by comparing realpath
+
+        // Move uploads into the canonical disk before touching public/storage.
+        if (is_dir($linkPath) && ! $this->isStorageSymlink($linkPath)) {
+            $this->migrateDirectoryContents($linkPath, $diskRoot);
+        }
+
+        foreach ([
+            $diskRoot . '/app/public',
+            public_path('app/public'),
+        ] as $legacyRoot) {
+            if (is_dir($legacyRoot)) {
+                $this->migrateDirectoryContents($legacyRoot, $diskRoot);
+            }
+        }
+
+        if ($this->storageSymlinkIsCorrect($linkPath, $diskRoot)) {
+            return redirect()->back()->withSuccess(__('Storage is already connected.'));
+        }
+
+        $this->removePublicStoragePath($linkPath);
+
+        Artisan::call('storage:link');
+
+        if (! $this->storageSymlinkIsCorrect(public_path('storage'), $diskRoot)) {
+            return redirect()->back()->withErrors(__('Storage link could not be created. Check folder permissions.'));
+        }
+
+        return redirect()->back()->withSuccess(__('Storage connected successfully. Existing uploads were preserved.'));
+    }
+
+    private function storageSymlinkIsCorrect(string $linkPath, string $diskRoot): bool
+    {
+        if (! file_exists($linkPath)) {
+            return false;
+        }
+
+        $linkReal = realpath($linkPath);
+        $diskReal = realpath($diskRoot);
+
+        return $linkReal !== false && $diskReal !== false && $linkReal === $diskReal;
+    }
+
+    private function isStorageSymlink(string $path): bool
+    {
+        if (is_link($path)) {
+            return true;
+        }
+
         $real = realpath($path);
-        if ($real !== false && $real !== $path) {
-            // On Windows, junctions can't be unlinked — use rmdir
+
+        return $real !== false && $real !== $path;
+    }
+
+    private function migrateDirectoryContents(string $source, string $destination): void
+    {
+        if (! is_dir($source)) {
+            return;
+        }
+
+        if (! is_dir($destination)) {
+            mkdir($destination, 0755, true);
+        }
+
+        $sourceReal = realpath($source);
+        $destinationReal = realpath($destination);
+
+        if ($sourceReal === false || $destinationReal === false || $sourceReal === $destinationReal) {
+            return;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($source, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            $relative = substr($item->getPathname(), strlen($sourceReal) + 1);
+            $target = $destinationReal . DIRECTORY_SEPARATOR . $relative;
+
+            if ($item->isDir()) {
+                if (! is_dir($target)) {
+                    mkdir($target, 0755, true);
+                }
+                continue;
+            }
+
+            if (! is_dir(dirname($target))) {
+                mkdir(dirname($target), 0755, true);
+            }
+
+            if (! is_file($target)) {
+                copy($item->getPathname(), $target);
+            }
+        }
+    }
+
+    private function removePublicStoragePath(string $path): void
+    {
+        if (! file_exists($path)) {
+            return;
+        }
+
+        if ($this->isStorageSymlink($path)) {
             if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
                 rmdir($path);
             } else {
                 unlink($path);
             }
-            Artisan::call('storage:link');
-            return redirect()->back()->withSuccess(__('Storage connected successfully.'));
+
+            return;
         }
-    
-        // If it's a normal directory, delete recursively
+
         if (is_dir($path)) {
-            $items = array_diff(scandir($path), ['.', '..']);
-            foreach ($items as $item) {
-                $itemPath = $path . DIRECTORY_SEPARATOR . $item;
-                if (is_dir($itemPath)) {
-                    $this->removeStorageLinkOrDirectory($itemPath); // recursive cleaner
-                } else {
-                    unlink($itemPath);
-                }
-            }
-            rmdir($path);
-            Artisan::call('storage:link');
-            return redirect()->back()->withSuccess(__('Storage connected successfully.'));
+            $this->removeStorageLinkOrDirectory($path);
         }
-    
-        return redirect()->back()->withErrors(__('Unknown error. Could not remove storage path.'));
     }
-    
-    private function removeStorageLinkOrDirectory($path)
+
+    private function removeStorageLinkOrDirectory(string $path): void
     {
-        if (is_dir($path)) {
-            $items = array_diff(scandir($path), ['.', '..']);
-            foreach ($items as $item) {
-                $itemPath = $path . DIRECTORY_SEPARATOR . $item;
-                if (is_dir($itemPath)) {
-                    $this->removeStorageLinkOrDirectory($itemPath);
-                } else {
-                    unlink($itemPath);
-                }
-            }
-            rmdir($path);
+        if (! is_dir($path)) {
+            return;
         }
+
+        $items = array_diff(scandir($path), ['.', '..']);
+        foreach ($items as $item) {
+            $itemPath = $path . DIRECTORY_SEPARATOR . $item;
+            if (is_dir($itemPath)) {
+                $this->removeStorageLinkOrDirectory($itemPath);
+            } else {
+                unlink($itemPath);
+            }
+        }
+        rmdir($path);
     }
     
 

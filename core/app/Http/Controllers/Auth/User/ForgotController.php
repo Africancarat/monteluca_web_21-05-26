@@ -8,7 +8,8 @@ use App\{
     Repositories\Both\ForgotRepository
 };
 
-use Illuminate\Http\Request;
+use App\Http\Requests\ForgotPasswordRequest;
+use App\Http\Requests\PasswordResetRequest;
 use Illuminate\Support\Facades\Session;
 
 class ForgotController extends Controller
@@ -42,13 +43,11 @@ class ForgotController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function forgot(Request $request)
+    public function forgot(ForgotPasswordRequest $request)
     {
-      $request->validate([
-        'email' => 'required|email'
-      ]);
-      
-      if ($data = User::whereEmail($request->email)->first()){
+      $email = $request->validated('email');
+
+      if ($data = User::whereEmail($email)->first()){
         $this->repository->forgot($data,$request,'user');
         Session::flash('success',__('We Have Sent a Link To Your Account!. Please Check Your Email.'));
         return redirect()->back();
@@ -80,7 +79,7 @@ class ForgotController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function changepass(Request $request)
+    public function changepass(PasswordResetRequest $request)
     {
       
         $data =  User::whereEmailToken($request->file_token)->first();

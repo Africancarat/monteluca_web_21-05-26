@@ -10,26 +10,21 @@ use Illuminate\{
 
 class SubscribeRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
+    use Concerns\SanitizesInput;
+
+    public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
+    protected function prepareForValidation(): void
     {
-        return [
-            'email' => ['required' , 'unique:subscribers,email'],
-        ];
+        $this->normalizeEmail('email');
+    }
+
+    public function rules(): array
+    {
+        return ValidationRules::emailUnique('email', 'subscribers', null, true);
     }
 
 

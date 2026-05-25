@@ -11,7 +11,7 @@
             ['icon' => 'ring-setting', 'label' => __('Toi et Moi rings'), 'href' => url('/catalog?' . http_build_query(['subcategory' => 'Toi-et-mo-Rings']))],
             ['icon' => 'ring-eternity', 'label' => __('Eternity band'), 'href' => url('/catalog?' . http_build_query(['subcategory' => 'Eternity-Rings']))],
             ['icon' => 'ring-eternity', 'label' => __('Stacking rings'), 'href' => url('/catalog?' . http_build_query(['subcategory' => 'Stacking-Rings']))],
-            ['icon' => 'ring-anniversary', 'label' => __('Bridal sets'), 'href' => url('/catalog?' . http_build_query(['subcategory' => 'Bridal-Set']))],
+            ['icon' => 'ring-anniversary', 'label' => __('Bridal sets'), 'href' => route('front.catalog', ['subcategory' => 'bridal-sets'])],
         ] as $row)
             <a href="{{ $row['href'] }}" class="luxury-mega-link luxury-mega-link--with-icon">
                 @include('master.inc.mega-menus.partials.icon', ['name' => $row['icon']])

@@ -16,7 +16,7 @@ class Item extends Model
                 if (! is_string($value) || trim($value) === '') {
                     continue;
                 }
-                $fixed = ImageHelper::normalizeStorageImagePath(trim($value));
+                $fixed = ImageHelper::storageImageBasename($value);
                 if ($fixed !== $value) {
                     $item->setAttribute($attribute, $fixed);
                 }

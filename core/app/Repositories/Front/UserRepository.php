@@ -1,95 +1,177 @@
 <?php
 
+
+
 namespace App\Repositories\Front;
 
+
+
 use App\{
+
     Models\User,
+
     Models\Setting,
-    Helpers\EmailHelper,
+
     Models\Notification
+
 };
+
 use App\Helpers\ImageHelper;
-use App\Jobs\EmailSendJob;
+
 use App\Models\Subscriber;
+
+use App\Support\EmailVerification;
+
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
+
+
 
 class UserRepository
+
 {
 
-    public function register($request)
+    public function register($request): User
+
     {
 
+        $data = $request->validated();
 
-        $input = $request->all();
+
 
         $user = new User;
-        $input['password'] = bcrypt($request['password']);
-        $input['email'] = $input['email'];
-        $input['first_name'] = $input['first_name'];
-        $input['last_name'] = $input['last_name'];
-        $input['phone'] = $input['phone'];
-        $verify = rand(pow(10, 6 - 1), pow(10, 6) - 1);
-        $input['email_token'] = $verify;
-        $user->fill($input)->save();
+
+        $user->fill([
+
+            'first_name' => $data['first_name'],
+
+            'last_name' => $data['last_name'],
+
+            'phone' => $data['phone'],
+
+            'email' => $data['email'],
+
+            'password' => bcrypt($data['password']),
+
+            'email_verify' => EmailVerification::isRequired() ? 0 : 1,
+
+            'email_verified_at' => EmailVerification::isRequired() ? null : now(),
+
+        ]);
+
+        $user->save();
+
 
 
         Notification::create(['user_id' => $user->id]);
-        $emailData = [
-            'to' => $user->email,
-            'subject' => "Email Verification",
-            'body' => "Your verification code is " . $verify,
-        ];
-        $setting = Setting::first();
 
-        if ($setting->is_mail_verify == 1) {
-            if ($setting->is_queue_enabled == 1) {
-                dispatch(new EmailSendJob($emailData));
-            } else {
-                $email = new EmailHelper();
-                $email->sendCustomMail($emailData, "custom");
-            }
+
+
+        if (EmailVerification::isRequired()) {
+
+            $user->sendEmailVerificationNotification();
+
         }
+
+
+
+        return $user;
+
     }
 
 
 
+    public function profileUpdate($request): void
 
-
-    public function profileUpdate($request)
     {
 
-        $input = $request->all();
-        if ($request['user_id']) {
-            $user = User::findOrFail($request['user_id']);
+        $data = $request->validated();
+
+
+
+        if (! empty($data['user_id']) && Auth::guard('admin')->check()) {
+
+            $user = User::findOrFail($data['user_id']);
+
         } else {
+
             $user = Auth::user();
+
         }
 
 
-        if ($request->password) {
-            $input['password'] = bcrypt($input['password']);
-            $user->password = $input['password'];
-            $user->update();
-        } else {
-            unset($input['password']);
+
+        if (! empty($data['password'])) {
+
+            $user->password = bcrypt($data['password']);
+
+            $user->save();
+
         }
-      
+
+
 
         if ($file = $request->file('photo')) {
-            $input['photo'] = ImageHelper::handleUpdatedUploadedImage($file, 'images', $user, 'images', 'photo');
+
+            $data['photo'] = ImageHelper::handleUpdatedUploadedImage($file, 'images', $user, 'images', 'photo');
+
         }
 
-        if ($request->newsletter) {
-            if (!Subscriber::where('email', $user->email)->exists()) {
-                Subscriber::insert([
-                    'email' => $user->email
-                ]);
+
+
+        if ($request->boolean('newsletter')) {
+
+            if (! Subscriber::where('email', $user->email)->exists()) {
+
+                Subscriber::insert(['email' => $user->email]);
+
             }
+
         } else {
+
             Subscriber::where('email', $user->email)->delete();
+
         }
 
-        $user->fill($input)->save();
+
+
+        $emailChanged = isset($data['email'])
+
+            && strtolower(trim($data['email'])) !== strtolower($user->email);
+
+
+
+        $user->fill(collect($data)->only([
+
+            'first_name',
+
+            'last_name',
+
+            'phone',
+
+            'email',
+
+            'photo',
+
+        ])->filter(fn ($v) => $v !== null)->all())->save();
+
+
+
+        if ($emailChanged && EmailVerification::isRequired() && ! Auth::guard('admin')->check()) {
+
+            $user->forceFill([
+
+                'email_verified_at' => null,
+
+                'email_verify' => 0,
+
+            ])->save();
+
+            $user->sendEmailVerificationNotification();
+
+        }
+
     }
+
 }
+
+

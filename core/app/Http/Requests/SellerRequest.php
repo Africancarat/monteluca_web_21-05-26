@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Setting;
+use App\Support\ValidationRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
@@ -29,16 +30,17 @@ class SellerRequest extends FormRequest
         $id = Auth::check() ? ',' . Auth::user()->id : '';
         $setting = Setting::first();
         $password = Auth::check() ? '' : 'required|';
-        $check = Auth::check() ? 'nullable|min:6|max:16' : "min:6|max:16|confirmed";
+        $passwordRules = ValidationRules::strongPassword(! Auth::check());
+        $passwordRules[] = 'confirmed';
 
         return [
             'g-recaptcha-response' => $setting->recaptcha == 1 ?  $password : '',
             'first_name' => $password . '|max:255',
             'last_name'  => 'required|max:255',
-            'phone'      => 'required|max:255',
-            'email'      => Auth::guard('admin') ? 'required|email' : 'required|email|unique:users,email' . $id,
-            'password'   => $password . $check,
-            'password_confirmation'   => $password,
+            'phone'      => ValidationRules::phone('phone')['phone'],
+            'email'      => Auth::guard('admin')->check() ? 'required|email' : 'required|email|unique:users,email' . $id,
+            'password'   => $passwordRules,
+            'password_confirmation'   => [Auth::check() ? 'nullable' : 'required', 'string', 'required_with:password'],
             "shop_name" => "required|unique:sellers,user_id," . $id,
             "shop_address" => "required|string"
         ];
@@ -56,9 +58,14 @@ class SellerRequest extends FormRequest
             'first_name.required' => __('First Name is required.'),
             'last_name.required' => __('Last Name field is required.'),
             'phone.required' => __('Phone Number is required.'),
+            'phone.digits' => __('Phone number must contain exactly 10 digits.'),
             'email.required' => __('Email field is required.'),
             'email.email'   => __('The email must be a valid email address.'),
             'password.required'    => __('Password field is required.'),
+            'password.mixed' => __('Password must contain uppercase and lowercase letters.'),
+            'password.numbers' => __('Password must contain at least one number.'),
+            'password.symbols' => __('Password must contain at least one symbol.'),
+            'password.uncompromised' => __('This password has appeared in a data breach. Please choose a different password.'),
             "shop_name.required" => "Shop name field is required",
             "shop_name.unique" => "Shop name already exists",
             "shop_address.required" => "Shop address field is required",

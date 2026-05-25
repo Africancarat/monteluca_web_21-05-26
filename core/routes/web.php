@@ -26,14 +26,20 @@ Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
     Route::prefix('admin')->group(function () { 
         //------------ AUTH ------------
         Route::get('/login', 'Auth\Back\LoginController@showForm')->name('back.login');
-        Route::post('/login-submit', 'Auth\Back\LoginController@login')->name('back.login.submit');
+        Route::post('/login-submit', 'Auth\Back\LoginController@login')
+            ->middleware('throttle:api-sensitive')
+            ->name('back.login.submit');
         Route::get('/logout', 'Auth\Back\LoginController@logout')->name('back.logout');
 
         //------------ FORGOT ------------
         Route::get('/forgot', 'Auth\Back\ForgotController@showForm')->name('back.forgot');
-        Route::post('/forgot-submit', 'Auth\Back\ForgotController@forgot')->name('back.forgot.submit');
+        Route::post('/forgot-submit', 'Auth\Back\ForgotController@forgot')
+            ->middleware('throttle:api-sensitive')
+            ->name('back.forgot.submit');
         Route::get('/change-password/{token}', 'Auth\Back\ForgotController@showChangePassForm')->name('back.change.token');
-        Route::post('/change-password-submit', 'Auth\Back\ForgotController@changepass')->name('back.change.password');
+        Route::post('/change-password-submit', 'Auth\Back\ForgotController@changepass')
+            ->middleware('throttle:api-sensitive')
+            ->name('back.change.password');
 
         //------------ DASHBOARD & PROFILE ------------
         Route::get('/', 'Back\AccountController@index')->name('back.dashboard');
@@ -327,53 +333,71 @@ Route::group(['middleware' => 'maintainance'], function () {
         Route::prefix('user')->group(function () {
 
             //------------ AUTH ------------
-            Route::get('/verify', 'Auth\User\LoginController@showVerifyForm')->name('user.verify');
-            Route::post('/email/verify/submit/asdfasdf', 'Auth\User\LoginController@verifySubmit')->name('user.verify.submit');
             Route::get('/login', 'Auth\User\LoginController@showForm')->name('user.login');
-            Route::post('/login-submit', 'Auth\User\LoginController@login')->name('user.login.submit');
+            Route::post('/login-submit', 'Auth\User\LoginController@login')
+                ->middleware('throttle:api-sensitive')
+                ->name('user.login.submit');
             Route::get('/logout', 'Auth\User\LoginController@logout')->name('user.logout');
-            Route::get('/remove/account', 'User\AccountController@removeAccount')->name('user.account.remove');
+
+            //------------ EMAIL VERIFICATION (signed URLs) ------------
+            Route::get('/email/verify', 'Auth\User\EmailVerificationController@notice')->name('verification.notice');
+            Route::post('/email/verification-notification', 'Auth\User\EmailVerificationController@resend')
+                ->middleware('throttle:api-sensitive')
+                ->name('verification.send');
+            Route::get('/email/verify/{id}/{hash}', 'Auth\User\EmailVerificationController@verify')
+                ->middleware(['signed', 'throttle:api-sensitive'])
+                ->name('verification.verify');
+
+            // Legacy OTP routes → notice page
+            Route::get('/verify', fn () => redirect()->route('verification.notice'))->name('user.verify');
+            Route::get('/verify-link/{token}', 'Auth\User\RegisterController@verify')->name('user.account.verify');
 
             //------------ REGISTER ------------
             Route::get('/register', 'Auth\User\RegisterController@showForm')->name('user.register');
-            Route::post('/register-submit', 'Auth\User\RegisterController@register')->name('user.register.submit');
-            Route::get('/verify-link/{token}', 'Auth\User\RegisterController@verify')->name('user.account.verify');
+            Route::post('/register-submit', 'Auth\User\RegisterController@register')
+                ->middleware('throttle:api-sensitive')
+                ->name('user.register.submit');
 
             //------------ FORGOT ------------
             Route::get('/forgot', 'Auth\User\ForgotController@showForm')->name('user.forgot');
-            Route::post('/forgot-submit', 'Auth\User\ForgotController@forgot')->name('user.forgot.submit');
+            Route::post('/forgot-submit', 'Auth\User\ForgotController@forgot')
+                ->middleware('throttle:api-sensitive')
+                ->name('user.forgot.submit');
             Route::get('/change-password/{token}', 'Auth\User\ForgotController@showChangePassForm')->name('user.change.token');
-            Route::post('/change-password-submit', 'Auth\User\ForgotController@changepass')->name('user.change.password');
+            Route::post('/change-password-submit', 'Auth\User\ForgotController@changepass')
+                ->middleware('throttle:api-sensitive')
+                ->name('user.change.password');
 
 
 
-            //------------ DASHBOARD ------------
-            Route::get('/dashboard', 'User\AccountController@index')->name('user.dashboard');
-            Route::get('/profile', 'User\AccountController@profile')->name('user.profile');
+            Route::get('/remove/account', 'User\AccountController@removeAccount')->name('user.account.remove');
 
-            // ----------- TICKET ---------------//
-            Route::get('/ticket', 'User\TicketController@ticket')->name('user.ticket');
-            Route::get('/ticket/new', 'User\TicketController@ticketNew')->name('user.ticket.create');
-            Route::post('/ticket/store', 'User\TicketController@ticketStore')->name('user.ticket.store');
-            Route::get('/ticket/view/{id}', 'User\TicketController@ticketView')->name('user.ticket.view');
-            Route::post('/ticket/reply/store', 'User\TicketController@ticketReply')->name('user.ticket.reply');
-            Route::get('/ticket/delete/{id}', 'User\TicketController@ticketDelete')->name('user.ticket.delete');
+            //------------ PROTECTED (auth + verified email when enabled) ------------
+            Route::middleware(['auth', 'verified'])->group(function () {
+                Route::get('/dashboard', 'User\AccountController@index')->name('user.dashboard');
+                Route::get('/profile', 'User\AccountController@profile')->name('user.profile');
 
-            //------------ SETTING ------------
-            Route::post('/profile/update', 'User\AccountController@profileUpdate')->name('user.profile.update');
-            Route::get('/addresses', 'User\AccountController@addresses')->name('user.address');
-            Route::post('/billing/addresses', 'User\AccountController@billingSubmit')->name('user.billing.submit');
-            Route::post('/shipping/addresses', 'User\AccountController@shippingSubmit')->name('user.shipping.submit');
+                Route::get('/ticket', 'User\TicketController@ticket')->name('user.ticket');
+                Route::get('/ticket/new', 'User\TicketController@ticketNew')->name('user.ticket.create');
+                Route::post('/ticket/store', 'User\TicketController@ticketStore')->name('user.ticket.store');
+                Route::get('/ticket/view/{id}', 'User\TicketController@ticketView')->name('user.ticket.view');
+                Route::post('/ticket/reply/store', 'User\TicketController@ticketReply')->name('user.ticket.reply');
+                Route::get('/ticket/delete/{id}', 'User\TicketController@ticketDelete')->name('user.ticket.delete');
 
-            //------------ ORDER ------------
-            Route::get('/orders', 'User\OrderController@index')->name('user.order.index');
-            Route::get('/order/print/{id}', 'User\OrderController@printOrder')->name('user.order.print');
-            Route::get('/order/invoice/{id}', 'User\OrderController@details')->name('user.order.invoice');
-            //------------ WISHLIST ------------
-            Route::get('/wishlists', 'User\WishlistController@index')->name('user.wishlist.index');
-            Route::get('/wishlist/store/{id}', 'User\WishlistController@store')->name('user.wishlist.store');
-            Route::get('/wishlist/delete/{id}', 'User\WishlistController@delete')->name('user.wishlist.delete');
-            Route::get('/wishlista/delete/all', 'User\WishlistController@alldelete')->name('user.wishlist.delete.all');
+                Route::post('/profile/update', 'User\AccountController@profileUpdate')->name('user.profile.update');
+                Route::get('/addresses', 'User\AccountController@addresses')->name('user.address');
+                Route::post('/billing/addresses', 'User\AccountController@billingSubmit')->name('user.billing.submit');
+                Route::post('/shipping/addresses', 'User\AccountController@shippingSubmit')->name('user.shipping.submit');
+
+                Route::get('/orders', 'User\OrderController@index')->name('user.order.index');
+                Route::get('/order/print/{id}', 'User\OrderController@printOrder')->name('user.order.print');
+                Route::get('/order/invoice/{id}', 'User\OrderController@details')->name('user.order.invoice');
+
+                Route::get('/wishlists', 'User\WishlistController@index')->name('user.wishlist.index');
+                Route::get('/wishlist/store/{id}', 'User\WishlistController@store')->name('user.wishlist.store');
+                Route::get('/wishlist/delete/{id}', 'User\WishlistController@delete')->name('user.wishlist.delete');
+                Route::get('/wishlista/delete/all', 'User\WishlistController@alldelete')->name('user.wishlist.delete.all');
+            });
         });
 
 
