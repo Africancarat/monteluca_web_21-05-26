@@ -45,6 +45,22 @@
                 </tr>
             @endif
 
+            @if (!empty($referral))
+                <tr class="referral-discount-row">
+                    <td>{{ __('Referral discount') }} ({{ $referral['code']['referral_code'] ?? '' }}):</td>
+                    <td class="text-danger referral-discount-amount">-
+                        {{ PriceHelper::setCurrencyPrice($referral['discount'] ?? 0) }}</td>
+                </tr>
+            @endif
+
+            @if (!empty($referral_balance_applied))
+                <tr class="referral-balance-discount-row">
+                    <td>{{ __('Referral balance') }}:</td>
+                    <td class="text-danger">-
+                        {{ PriceHelper::setCurrencyPrice($referral_balance_applied['discount'] ?? 0) }}</td>
+                </tr>
+            @endif
+
             @if ($shipping)
                 <tr class="d-none set__shipping_price_tr">
                     <td>{{ __('Shipping') }}:</td>
@@ -54,10 +70,49 @@
             @endif
             <tr>
                 <td class="text-lg text-primary">{{ __('Order total') }}</td>
-                <td class="text-lg text-primary grand_total_set">{{ PriceHelper::setCurrencyPrice($grand_total) }}
+                <td class="text-lg text-primary grand_total_set" data-cart-subtotal="{{ $cart_total + ($tax ?? 0) }}">
+                    {{ PriceHelper::setCurrencyPrice($grand_total) }}
                 </td>
             </tr>
         </table>
+
+        <div class="mt-3">
+            <label class="small text-muted mb-1">{{ __('Referral Code') }}</label>
+            <form id="referral_apply_form" class="d-flex gap-2" action="{{ route('front.referral.apply') }}" method="POST">
+                @csrf
+                <input type="text" name="referral_code" class="form-control form-control-sm text-uppercase"
+                    placeholder="{{ __('e.g. MONTE123') }}"
+                    value="{{ $referral['code']['referral_code'] ?? '' }}">
+                <button type="submit" class="btn btn-sm btn-outline-primary">{{ __('Apply') }}</button>
+            </form>
+            @if (!empty($referral))
+                <button type="button" class="btn btn-link btn-sm text-danger p-0 mt-1" id="referral_remove_btn"
+                    data-url="{{ route('front.referral.destroy') }}">{{ __('Remove referral') }}</button>
+            @endif
+            <p class="small text-muted mb-0 mt-1 referral-apply-message" role="status"></p>
+        </div>
+
+        @auth
+            <div class="mt-3 pt-3 border-top">
+                <label class="small text-muted mb-1 d-block">{{ __('Referral balance') }}</label>
+                <p class="small mb-2">
+                    {{ __('Available') }}:
+                    <strong class="referral-balance-available">{{ PriceHelper::setCurrencyPrice($referral_balance_available ?? 0) }}</strong>
+                </p>
+                @if (empty($referral_balance_applied))
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="referral_balance_apply_btn"
+                        data-url="{{ route('front.referral-balance.apply') }}">
+                        {{ __('Use referral balance') }}
+                    </button>
+                @else
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0" id="referral_balance_remove_btn"
+                        data-url="{{ route('front.referral-balance.destroy') }}">
+                        {{ __('Remove referral balance') }}
+                    </button>
+                @endif
+                <p class="small text-muted mb-0 mt-1 referral-balance-message" role="status"></p>
+            </div>
+        @endauth
     </section>
 
     @if (PriceHelper::CheckDigital() == true)
@@ -204,6 +259,91 @@
         });
 
         // Handle the "Terms and Conditions" checkbox click
+        function parseCheckoutAmount(text) {
+            if (!text) return 0;
+            var n = parseFloat(String(text).replace(/[^0-9.]/g, ''));
+            return isNaN(n) ? 0 : n;
+        }
+
+        function checkoutOrderSubtotal() {
+            var el = $('.grand_total_set');
+            var base = parseFloat(el.data('cart-subtotal'));
+            if (!isNaN(base) && base > 0) {
+                return base;
+            }
+            return parseCheckoutAmount($('.grand_total_set').first().text());
+        }
+
+        $(document).on('submit', '#referral_apply_form', function(e) {
+            e.preventDefault();
+            var form = $(this);
+            var code = form.find('[name=referral_code]').val();
+            $.ajax({
+                type: 'POST',
+                url: form.attr('action'),
+                data: {
+                    _token: form.find('[name=_token]').val(),
+                    referral_code: code,
+                    order_amount: checkoutOrderSubtotal()
+                },
+                success: function(data) {
+                    var msg = form.siblings('.referral-apply-message');
+                    if (data.success) {
+                        msg.removeClass('text-danger').addClass('text-success').text(data.message);
+                        location.reload();
+                    } else {
+                        msg.removeClass('text-success').addClass('text-danger').text(data.message);
+                    }
+                },
+                error: function(xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message
+                        ? xhr.responseJSON.message
+                        : '{{ __('Invalid referral code') }}';
+                    form.siblings('.referral-apply-message').removeClass('text-success').addClass('text-danger').text(message);
+                }
+            });
+        });
+
+        $(document).on('click', '#referral_remove_btn', function() {
+            $.post($(this).data('url'), { _token: '{{ csrf_token() }}' }, function() {
+                location.reload();
+            });
+        });
+
+        $(document).on('click', '#referral_balance_apply_btn', function() {
+            var btn = $(this);
+            var msg = $('.referral-balance-message');
+            msg.removeClass('text-success text-danger').text('');
+            $.ajax({
+                type: 'POST',
+                url: btn.data('url'),
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    order_amount: checkoutOrderSubtotal()
+                },
+                success: function(data) {
+                    if (data.success) {
+                        msg.addClass('text-success').text(data.message);
+                        location.reload();
+                    } else {
+                        msg.addClass('text-danger').text(data.message);
+                    }
+                },
+                error: function(xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message
+                        ? xhr.responseJSON.message
+                        : '{{ __('Unable to use referral balance. Insufficient balance.') }}';
+                    msg.addClass('text-danger').text(message);
+                }
+            });
+        });
+
+        $(document).on('click', '#referral_balance_remove_btn', function() {
+            $.post($(this).data('url'), { _token: '{{ csrf_token() }}' }, function() {
+                location.reload();
+            });
+        });
+
         $(document).on("click", "#trams__condition_single", function() {
             if ($("#trams__condition_single").is(':checked')) {
                 console.log("check");

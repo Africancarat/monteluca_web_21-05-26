@@ -291,26 +291,7 @@
                                         </td>
                                     </tr>
                                 @endif
-                                @if (json_decode($order->discount, true))
-                                    @php
-                                        $discount = json_decode($order->discount, true);
-                                    @endphp
-                                    <tr>
-                                        <td class="px-0 border-top border-top-2">
-                                            <span class="text-muted">{{ __('Coupon discount') }}
-                                                ({{ $discount['code']['code_name'] }})</span>
-                                        </td>
-                                        <td class="px-0 text-right border-top border-top-2" colspan="5">
-                                            <span class="text-danger">
-                                                @if ($setting->currency_direction == 1)
-                                                    -{{ $order->currency_sign }}{{ round($discount['discount'] * $order->currency_value, 2) }}
-                                                @else
-                                                    -{{ round($discount['discount'] * $order->currency_value, 2) }}{{ $order->currency_sign }}
-                                                @endif
-                                            </span>
-                                        </td>
-                                    </tr>
-                                @endif
+                                @include('includes.order-discount-rows')
                                 @if (json_decode($order->shipping, true))
                                     @php
                                         $shipping = json_decode($order->shipping, true);

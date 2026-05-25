@@ -162,6 +162,11 @@ Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
             Route::get('code/status/{id}/{status}', 'Back\PromoCodeController@status')->name('back.code.status');
             Route::resource('code', 'Back\PromoCodeController', ['as' => 'back', 'except' => 'show']);
 
+            //------------ REFERRAL CODES ------------
+            Route::get('referral-code/status/{id}/{status}', 'Back\ReferralCodeController@status')->name('back.referral-code.status');
+            Route::resource('referral-code', 'Back\ReferralCodeController', ['as' => 'back', 'except' => 'show']);
+            Route::get('referral-transactions', 'Back\ReferralTransactionController@index')->name('back.referral-transaction.index');
+
             //------------ TAX SETTING ------------
             Route::get('tax/status/{id}/{status}', 'Back\TaxController@status')->name('back.tax.status');
             Route::resource('tax', 'Back\TaxController', ['as' => 'back', 'except' => 'show']);
@@ -454,6 +459,10 @@ Route::group(['middleware' => 'maintainance'], function () {
 
         Route::post('/promo/submit', 'Front\CartController@promoStore')->name('front.promo.submit');
         Route::get('/promo/destroy', 'Front\CartController@promoDelete')->name('front.promo.destroy');
+        Route::post('/apply-referral', 'Front\ReferralController@apply')->name('front.referral.apply');
+        Route::post('/referral/destroy', 'Front\ReferralController@destroy')->name('front.referral.destroy');
+        Route::post('/apply-referral-balance', 'Front\ReferralBalanceController@apply')->name('front.referral-balance.apply');
+        Route::post('/referral-balance/destroy', 'Front\ReferralBalanceController@destroy')->name('front.referral-balance.destroy');
         Route::get('/cart/destroy/{id}', 'Front\CartController@destroy')->name('front.cart.destroy');
         Route::post('/shipping/submit', 'Front\CartController@shippingStore')->name('front.shipping.submit');
         Route::post('/shipping/charge/get', 'Front\CartController@shippingCharge')->name('front.shipping.charge');

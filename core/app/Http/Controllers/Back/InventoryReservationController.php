@@ -19,7 +19,7 @@ class InventoryReservationController extends Controller
         $status = $request->get('status', InventorySoftLock::STATUS_RESERVED);
 
         $query = InventorySoftLock::query()
-            ->with(['item:id,name,sku', 'user:id,name,email'])
+            ->with(['item:id,name,sku', 'user:id,first_name,email'])
             ->orderByDesc('expires_at');
 
         if ($status !== 'all') {

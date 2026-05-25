@@ -160,6 +160,16 @@
                       <span class="sub-item">{{ __('Set Coupons') }}</span></a>
                 </li>
                 <li>
+                    <a class="sub-link" href="{{ route('back.referral-code.index') }}">
+                        <span class="sub-item">{{ __('Referral Codes') }}</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="sub-link" href="{{ route('back.referral-transaction.index') }}">
+                        <span class="sub-item">{{ __('Referral Transactions') }}</span>
+                    </a>
+                </li>
+                <li>
                     <a class="sub-link" href="{{ route('back.shipping.index') }}">
                         <span class="sub-item">{{ __('Shipping') }}</span>
                     </a>

@@ -234,10 +234,12 @@ class OrderController extends Controller
     {
 
         $discount = json_decode($order->discount, true);
-        if($discount != null){
+        if ($discount != null && ! empty($discount['code']['id'])) {
             $code = PromoCode::find($discount['code']['id']);
-            $code->no_of_times--;
-            $code->update();
+            if ($code) {
+                $code->no_of_times--;
+                $code->update();
+            }
         }
     }
 

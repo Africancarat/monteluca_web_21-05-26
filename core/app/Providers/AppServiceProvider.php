@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Order;
+use App\Observers\OrderObserver;
 use Illuminate\{
     Support\ServiceProvider,
     Support\Facades\DB
@@ -16,6 +18,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerVitePublicUrlPrefix();
 
         Paginator::useBootstrap();
+        Order::observe(OrderObserver::class);
         view()->composer('*', function ($settings) {
             $settings->with('setting', DB::table('settings')->find(1));
             $settings->with('extra_settings', DB::table('extra_settings')->find(1));

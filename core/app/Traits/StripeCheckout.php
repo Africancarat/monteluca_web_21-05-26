@@ -25,12 +25,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session;
 
+use App\Helpers\CheckoutDiscountHelper;
 use App\Repositories\Front\CartRepository;
 
 use function GuzzleHttp\json_decode;
 
 trait StripeCheckout
 {
+    use HandlesReferralCheckout;
     use FinalizesCheckoutInventory;
 
     public function __construct()
@@ -65,10 +67,7 @@ trait StripeCheckout
         }
 
 
-        $discount = [];
-        if (Session::has('coupon')) {
-            $discount = Session::get('coupon');
-        }
+        $discount = CheckoutDiscountHelper::orderDiscountPayload();
 
         if (!PriceHelper::Digital()) {
             $shipping = null;
@@ -78,7 +77,7 @@ trait StripeCheckout
 
         $orderData['state'] =  $data['state_id'] ? json_encode(State::findOrFail($data['state_id']), true) : null;
         $grand_total = ($cart_total + ($shipping ? $shipping->price : 0)) + $total_tax;
-        $grand_total = $grand_total - ($discount ? $discount['discount'] : 0);
+        $grand_total = $this->applyCheckoutDiscounts($grand_total);
         $grand_total += PriceHelper::StatePrce($data['state_id'], $cart_total);
         $total_amount = PriceHelper::setConvertPrice($grand_total);
 
@@ -167,14 +166,10 @@ trait StripeCheckout
             } else {
                 $shipping = ShippingService::findOrFail($order_input_data['shipping_id']);
             }
-            $discount = [];
-            if (Session::has('coupon')) {
-                $discount = Session::get('coupon');
-            }
-
+            $discount = CheckoutDiscountHelper::orderDiscountPayload();
 
             $grand_total = ($cart_total + ($shipping ? $shipping->price : 0)) + $total_tax;
-            $grand_total = $grand_total - ($discount ? $discount['discount'] : 0);
+            $grand_total = $this->applyCheckoutDiscounts($grand_total);
             $grand_total += PriceHelper::StatePrce($order_input_data['state_id'], $cart_total);
 
             $total_amount = PriceHelper::setConvertPrice($grand_total);
@@ -247,6 +242,7 @@ trait StripeCheckout
             Session::forget('discount');
             Session::forget('order_data');
             Session::forget('order_payment_id');
+            Session::forget('referral');
             Session::forget('coupon');
             return [
                 'status' => true

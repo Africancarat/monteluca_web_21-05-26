@@ -13,6 +13,7 @@ use App\{
 };
 use App\Helpers\SmsHelper;
 use App\Jobs\EmailSendJob;
+use App\Helpers\CheckoutDiscountHelper;
 use App\Repositories\Front\CartRepository;
 use App\Models\Item;
 use App\Models\Order;
@@ -30,6 +31,7 @@ use function GuzzleHttp\json_decode;
 trait PaystackCheckout
 {
     use FinalizesCheckoutInventory;
+    use HandlesReferralCheckout;
 
 
     public function paystackSubmit($data){
@@ -59,17 +61,14 @@ trait PaystackCheckout
         }else{
             $shipping = ShippingService::findOrFail($data['shipping_id']);
         }
-        $discount = [];
-        if(Session::has('coupon')){
-            $discount = Session::get('coupon');
-        }
+        $discount = CheckoutDiscountHelper::orderDiscountPayload();
 
         if (!PriceHelper::Digital()){
             $shipping = null;
         }
-        
+
         $grand_total = ($cart_total + ($shipping?$shipping->price:0)) + $total_tax;
-        $grand_total = $grand_total - ($discount ? $discount['discount'] : 0);
+        $grand_total = $this->applyCheckoutDiscounts($grand_total);
         $grand_total += PriceHelper::StatePrce($data['state_id'],$cart_total);
         $total_amount = PriceHelper::setConvertPrice($grand_total);
         $orderData['state'] =  $data['state_id'] ? json_encode(State::findOrFail($data['state_id']),true) : null;
@@ -152,9 +151,7 @@ trait PaystackCheckout
                 }
         
                 Session::put('order_id',$order->id);
-                Session::forget('cart');
-                Session::forget('discount');
-                Session::forget('coupon');
+                $this->clearCheckoutSessions();
                 return [
                     'status' => true
                 ];
