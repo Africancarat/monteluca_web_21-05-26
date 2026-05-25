@@ -140,7 +140,7 @@ class ChatbotDataController extends Controller
             'phone'          => $user->phone ?? null,
             'orders_count'   => $orders->count(),
             'total_spent'    => number_format($totalSpent, 2),
-            'verified_email' => $user->email_verify == 1,
+            'verified_email' => $user->hasVerifiedEmail(),
             'created_at'     => $user->created_at,
             'tags'           => '',
         ]);

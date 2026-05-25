@@ -8,7 +8,8 @@ use App\{
     Repositories\Both\ForgotRepository
 };
 
-use Illuminate\Http\Request;
+use App\Http\Requests\ForgotPasswordRequest;
+use App\Http\Requests\PasswordResetRequest;
 
 class ForgotController extends Controller
 {
@@ -41,14 +42,16 @@ class ForgotController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function forgot(Request $request)
+    public function forgot(ForgotPasswordRequest $request)
     {
-      if ($data = Admin::whereEmail($request->email)->first()){
+      $email = $request->validated('email');
+
+      if ($data = Admin::whereEmail($email)->first()){
         $this->repository->forgot($data,$request,'back');
         return redirect()->back()->withSuccess(__('We Have Sent a Link To Your Account!. Please Check Your Email.'));
       }
       else{
-        return redirect()->back()->withErrors(__('No Account Found With This Email.'))->withInput($request->all());
+        return redirect()->back()->withErrors(__('No Account Found With This Email.'))->withInput($request->only('email'));
       }
     }
 
@@ -73,7 +76,7 @@ class ForgotController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function changepass(Request $request)
+    public function changepass(PasswordResetRequest $request)
     {
         $data =  Admin::whereEmailToken($request->file_token)->first();
         $resp = $this->repository->updatePassword($data,$request,'back');

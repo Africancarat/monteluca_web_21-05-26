@@ -7,7 +7,7 @@ use App\{
     Http\Controllers\Controller
 };
 use App\Helpers\ImageHelper;
-use App\Http\Requests\UserRequest;
+use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Subscriber;
 use App\Repositories\Front\UserRepository;
 use Illuminate\Contracts\Session\Session;
@@ -57,11 +57,8 @@ class UserController extends Controller
     }
 
 
-    public function update(UserRequest $request)
+    public function update(ProfileUpdateRequest $request)
     {
-        $request->validate([
-            'password' => 'min:6|max:16|nullable'
-        ]);
         $this->repository->profileUpdate($request);
         return redirect()->back()->withSuccess(__('Profile Updated Successfully.'));
         

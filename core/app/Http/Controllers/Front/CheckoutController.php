@@ -10,6 +10,8 @@ use App\{
     Traits\PaypalCheckout,
     Traits\PaystackCheckout,
     Http\Controllers\Controller,
+    Http\Requests\CheckoutBillingRequest,
+    Http\Requests\CheckoutShippingRequest,
     Http\Requests\PaymentRequest,
     Traits\CashOnDeliveryCheckout,
     Traits\BankCheckout,
@@ -53,6 +55,7 @@ class CheckoutController extends Controller
             $this->middleware('auth');
         }
         $this->middleware('localize');
+        $this->middleware('verified.checkout')->except([]);
         $this->__stripeConstruct();
         $this->__paypalConstruct();
     }
@@ -178,46 +181,37 @@ class CheckoutController extends Controller
 
 
 
-    public function billingStore(Request $request)
+    public function billingStore(CheckoutBillingRequest $request)
     {
-        // laravel validation
-        $request->validate([
-            'bill_first_name' => 'required',
-            'bill_last_name' => 'required',
-            'bill_email' => 'required|email',
-            'bill_phone' => 'required',
-            'bill_address1' => 'required',
-            'bill_city' => 'required',
-            'bill_zip' => 'required',
-        ]);
+        $billing = $request->safe()->only(CheckoutBillingRequest::SESSION_KEYS);
 
-        if ($request->same_ship_address) {
-            Session::put('billing_address', $request->all());
+        if ($request->boolean('same_ship_address')) {
+            Session::put('billing_address', $billing);
 
             if (PriceHelper::CheckDigital()) {
                 $shipping = [
-                    "ship_first_name" => $request->bill_first_name,
-                    "ship_last_name" => $request->bill_last_name,
-                    "ship_email" => $request->bill_email,
-                    "ship_phone" => $request->bill_phone,
-                    "ship_company" => $request->bill_company,
-                    "ship_address1" => $request->bill_address1,
-                    "ship_address2" => $request->bill_address2,
-                    "ship_zip" => $request->bill_zip,
-                    "ship_city" => $request->bill_city,
-                    "ship_country" => $request->bill_country,
+                    'ship_first_name' => $billing['bill_first_name'],
+                    'ship_last_name' => $billing['bill_last_name'],
+                    'ship_email' => $billing['bill_email'],
+                    'ship_phone' => $billing['bill_phone'],
+                    'ship_company' => $billing['bill_company'] ?? null,
+                    'ship_address1' => $billing['bill_address1'],
+                    'ship_address2' => $billing['bill_address2'] ?? null,
+                    'ship_zip' => $billing['bill_zip'],
+                    'ship_city' => $billing['bill_city'],
+                    'ship_country' => $billing['bill_country'],
                 ];
             } else {
                 $shipping = [
-                    "ship_first_name" => $request->bill_first_name,
-                    "ship_last_name" => $request->bill_last_name,
-                    "ship_email" => $request->bill_email,
-                    "ship_phone" => $request->bill_phone,
+                    'ship_first_name' => $billing['bill_first_name'],
+                    'ship_last_name' => $billing['bill_last_name'],
+                    'ship_email' => $billing['bill_email'],
+                    'ship_phone' => $billing['bill_phone'],
                 ];
             }
             Session::put('shipping_address', $shipping);
         } else {
-            Session::put('billing_address', $request->all());
+            Session::put('billing_address', $billing);
             Session::forget('shipping_address');
         }
 
@@ -285,21 +279,10 @@ class CheckoutController extends Controller
         return view('front.checkout.shipping', $data);
     }
 
-    public function shippingStore(Request $request)
+    public function shippingStore(CheckoutShippingRequest $request)
     {
+        Session::put('shipping_address', $request->safe()->only(CheckoutShippingRequest::SESSION_KEYS));
 
-        // laravel validation
-        $request->validate([
-            'ship_first_name' => 'required',
-            'ship_last_name' => 'required',
-            'ship_email' => 'required|email',
-            'ship_phone' => 'required',
-            'ship_address1' => 'required',
-            'ship_zip' => 'required',
-            'ship_city' => 'required',
-        ]);
-
-        Session::put('shipping_address', $request->all());
         return redirect(route('front.checkout.payment'));
     }
 

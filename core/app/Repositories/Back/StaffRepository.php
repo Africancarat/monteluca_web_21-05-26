@@ -19,7 +19,7 @@ class StaffRepository
 
     public function store($request)
     {
-        $input = $request->all();
+        $input = $request->except(['_token', '_method']);
         $input['password'] = bcrypt($request['password']);
         $input['photo'] = ImageHelper::handleUploadedImage($request->file('photo'),'images');
         Admin::create($input);
@@ -34,8 +34,13 @@ class StaffRepository
 
     public function update($staff, $request)
     {
-        $input = $request->all();
-        $input['password'] = bcrypt($request['password']);
+        $input = $request->except(['_token', '_method']);
+        if ($request->filled('password')) {
+            $input['password'] = bcrypt($request['password']);
+        } else {
+            unset($input['password']);
+        }
+
         if ($file = $request->file('photo')) {
             $input['photo'] = ImageHelper::handleUpdatedUploadedImage($file,'images',$staff,'images','photo');
         }

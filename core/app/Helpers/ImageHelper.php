@@ -10,24 +10,67 @@ class ImageHelper
 {
     /**
      * Resolve items.photo / thumbnail (filename, site path, or absolute URL) for use in img src.
+     * Always builds a URL for the current host (never returns a stale absolute URL from the DB).
      */
     public static function storageImageUrl(?string $path, ?string $placeholder = null): string
     {
+        $placeholder ??= url('/core/public/storage/images/placeholder.png');
+
         if ($path === null || trim($path) === '') {
-            return $placeholder ?? url('/core/public/storage/images/placeholder.png');
+            return $placeholder;
         }
 
+        $filename = self::storageImageBasename($path);
+        if ($filename === '') {
+            return $placeholder;
+        }
+
+        $filename = self::resolveExistingStorageFilename($filename);
+
+        return url('/core/public/storage/images/' . $filename);
+    }
+
+    /**
+     * Extract the images/ basename from a filename, relative path, or legacy absolute URL.
+     */
+    public static function storageImageBasename(string $path): string
+    {
         $p = self::normalizeStorageImagePath(trim($path));
 
         if (preg_match('/^https?:\/\//i', $p)) {
-            return $p;
+            $p = basename(parse_url($p, PHP_URL_PATH) ?: '') ?: $p;
         }
 
-        if (str_starts_with($p, '/')) {
-            return url($p);
+        $p = preg_replace('#^/?core/public/storage/images/#i', '', $p);
+        $p = preg_replace('#^/?storage/images/#i', '', $p);
+
+        return ltrim(str_replace('\\', '/', $p), '/');
+    }
+
+    /**
+     * When the DB omits an extension, pick the first matching file on disk.
+     */
+    public static function resolveExistingStorageFilename(string $filename): string
+    {
+        $dir = public_path('storage/images');
+        $fullPath = $dir . DIRECTORY_SEPARATOR . $filename;
+
+        if (is_file($fullPath)) {
+            return $filename;
         }
 
-        return url('/core/public/storage/images/' . ltrim($p, '/'));
+        if (pathinfo($filename, PATHINFO_EXTENSION) !== '') {
+            return $filename;
+        }
+
+        foreach (['.png', '.jpg', '.jpeg', '.webp', '.gif'] as $ext) {
+            $candidate = $filename . $ext;
+            if (is_file($dir . DIRECTORY_SEPARATOR . $candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $filename;
     }
 
     /**

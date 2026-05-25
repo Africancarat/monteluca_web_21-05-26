@@ -10,6 +10,7 @@ use App\{
     Http\Controllers\Controller
 };
 use App\Jobs\EmailSendJob;
+use App\Support\EmailVerification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Socialite;
@@ -47,7 +48,13 @@ class SocialLoginController extends Controller
 
         if (User::where('email', $socialUser->email)->exists()) {
             $auser = User::where('email', $socialUser->email)->first();
+
+            if (EmailVerification::isRequired() && ! $auser->hasVerifiedEmail()) {
+                $auser->markEmailAsVerified();
+            }
+
             Auth::login($auser);
+
             return redirect()->route('user.dashboard');
         } else {
             $name = $this->split_name($socialUser->name);
@@ -55,8 +62,9 @@ class SocialLoginController extends Controller
             $user->email = $socialUser->email;
             $user->first_name = $name[0];
             $user->last_name = $name[1];
+            $user->email_verified_at = now();
+            $user->email_verify = 1;
             $user->save();
-
 
             Notification::create([
                 'user_id' => $user->id

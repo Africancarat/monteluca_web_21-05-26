@@ -31,7 +31,7 @@ use App\Models\Post;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Models\TrackOrder;
-use Illuminate\Support\Facades\Config;
+use App\Support\Recaptcha;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
@@ -49,11 +49,7 @@ class FrontendController extends Controller
     public function __construct(FrontRepository $repository)
     {
         $this->repository = $repository;
-        $setting = Setting::first();
-        if ($setting->recaptcha == 1) {
-            Config::set('captcha.sitekey', $setting->google_recaptcha_site_key);
-            Config::set('captcha.secret', $setting->google_recaptcha_secret_key);
-        }
+        Recaptcha::applySiteConfig();
 
         $this->middleware('localize');
     }
@@ -487,31 +483,17 @@ class FrontendController extends Controller
         return view('front.contact');
     }
 
-    public function contactEmail(Request $request)
+    public function contactEmail(\App\Http\Requests\ContactRequest $request)
     {
         $setting = Setting::first();
-
-        $request->validate([
-            'g-recaptcha-response' => $setting->recaptcha == 1 ? 'required|captcha' : '',
-            'first_name' => 'required|max:50',
-            'last_name' => 'required|max:50',
-            'email' => 'required|email|max:50',
-            'phone' => 'required|max:50',
-            'message' => 'required|max:250',
-            'honeypot'   => 'max:0',
-        ]);
-
-        $input = $request->all();
-
-
-
+        $input = $request->validated();
 
         $name  = $input['first_name'] . ' ' . $input['last_name'];
         $subject = "Email From " . $name;
         $to = $setting->contact_email;
-        $phone = $request->phone;
-        $from = $request->email;
-        $msg = "Name: " . $name . "<br/>Email: " . $from . "<br/>Phone: " . $phone . "<br/>Message: " . $request->message;
+        $phone = $input['phone'];
+        $from = $input['email'];
+        $msg = "Name: " . e($name) . "<br/>Email: " . e($from) . "<br/>Phone: " . e($phone) . "<br/>Message: " . e($input['message']);
 
         $emailData = [
             'to' => $to,

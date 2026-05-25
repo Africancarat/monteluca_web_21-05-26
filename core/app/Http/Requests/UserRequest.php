@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Models\Setting;
+use App\Support\Recaptcha;
+use App\Support\ValidationRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
@@ -29,9 +31,10 @@ class UserRequest extends FormRequest
         $id = Auth::check() ? ',' . Auth::user()->id : '';
         $setting = Setting::first();
         $password = Auth::check() ? '' : 'required|';
-        $check = Auth::check() ? 'nullable|min:6|max:16' : "min:6|max:16|confirmed";
+        $passwordRules = ValidationRules::strongPassword(! Auth::check());
+        $passwordRules[] = 'confirmed';
 
-        $recaptcha = $setting->recaptcha == 1 && !Auth::check() ? 'required|captcha' : 'nullable';
+        $recaptcha = Recaptcha::isEnabled($setting->recaptcha) && ! Auth::check() ? 'required|captcha' : 'nullable';
 
         return [
             'g-recaptcha-response' => $recaptcha,
@@ -55,10 +58,10 @@ class UserRequest extends FormRequest
                 'max:2048'
             ],
             'last_name'  => 'required|max:255',
-            'phone'      => 'required|max:255',
-            'email'      => Auth::guard('admin') ? 'required|email': 'required|email|unique:users,email'. $id,
-            'password'   => $password.$check,
-            'password_confirmation'   => $password,
+            'phone'      => ValidationRules::phone('phone')['phone'],
+            'email'      => Auth::guard('admin')->check() ? 'required|email': 'required|email|unique:users,email'. $id,
+            'password'   => $passwordRules,
+            'password_confirmation'   => [Auth::check() ? 'nullable' : 'required', 'string', 'required_with:password'],
             'honeypot'   => 'max:0',
         ];
 
@@ -80,9 +83,14 @@ class UserRequest extends FormRequest
             'address.required' => __('Address is required.'),
             'zip.required' => __('Zip Code is required.'),
             'phone.required' => __('Phone Number is required.'),
+            'phone.digits' => __('Phone number must contain exactly 10 digits.'),
             'email.required' => __('Email field is required.'),
             'email.email'   => __('The email must be a valid email address.'),
             'password.required'    => __('Password field is required.'),
+            'password.mixed' => __('Password must contain uppercase and lowercase letters.'),
+            'password.numbers' => __('Password must contain at least one number.'),
+            'password.symbols' => __('Password must contain at least one symbol.'),
+            'password.uncompromised' => __('This password has appeared in a data breach. Please choose a different password.'),
             'g-recaptcha-response.required' => __('Please verify that you are not a robot.'),
             'g-recaptcha-response.captcha' => __('Captcha error! try again later or contact site admin.'),
             'honeypot.max' => __('Please verify that you are not a robot.'),

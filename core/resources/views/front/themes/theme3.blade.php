@@ -406,7 +406,7 @@
                                                 @if($item->previous_price && $item->previous_price !=0)
                                                 <div class="product-badge product-badge2 bg-info"> -{{PriceHelper::DiscountPercentage($item)}}</div>
                                                 @endif
-                                                <img class="lazy" data-src="{{url('/core/public/storage/images/'.$item->thumbnail)}}" alt="Product">
+                                                <img class="lazy" src="{{ \App\Helpers\ImageHelper::storageImageUrl($item->thumbnail ?: $item->photo) }}" data-src="{{ \App\Helpers\ImageHelper::storageImageUrl($item->thumbnail ?: $item->photo) }}" alt="Product">
                                                 <div class="product-button-group"><a class="product-button wishlist_store" href="{{route('user.wishlist.store',$item->id)}}" title="{{__('Wishlist')}}"><i class="icon-heart"></i></a>
                                                     @include('includes.item_footer',['sitem' => $item])
                                                 </div>
@@ -534,7 +534,7 @@
                                         @if($popular_category_item->previous_price && $popular_category_item->previous_price !=0)
                                         <div class="product-badge product-badge2 bg-info"> -{{PriceHelper::DiscountPercentage($popular_category_item)}}</div>
                                         @endif
-                                            <img class="lazy" data-src="{{url('/core/public/storage/images/'.$popular_category_item->thumbnail)}}" alt="Product">
+                                            <img class="lazy" src="{{ \App\Helpers\ImageHelper::storageImageUrl($popular_category_item->thumbnail ?: $popular_category_item->photo) }}" data-src="{{ \App\Helpers\ImageHelper::storageImageUrl($popular_category_item->thumbnail ?: $popular_category_item->photo) }}" alt="Product">
                                         <div class="product-button-group"><a class="product-button wishlist_store" href="{{route('user.wishlist.store',$popular_category_item->id)}}" title="{{__('Wishlist')}}"><i class="icon-heart"></i></a>
 
                                         @include('includes.item_footer',['sitem' => $popular_category_item])
@@ -589,7 +589,7 @@
                                                 ">{{__('out of stock')}}</div>
                                                 @endif
 
-                                            <img class="lazy" data-src="{{url('/core/public/storage/images/'.$two_column_category_item->thumbnail)}}" alt="Product"></a>
+                                            <img class="lazy" src="{{ \App\Helpers\ImageHelper::storageImageUrl($two_column_category_item->thumbnail ?: $two_column_category_item->photo) }}" data-src="{{ \App\Helpers\ImageHelper::storageImageUrl($two_column_category_item->thumbnail ?: $two_column_category_item->photo) }}" alt="Product"></a>
                                         <div class="product-card-body">
                                             <h3 class="product-title"><a href="{{route('front.product',$two_column_category_item->slug)}}">
                                                 {{ Str::limit($two_column_category_item->name,40) }}

@@ -16,10 +16,8 @@ class ForgotRepository
 
     public function forgot($data,$request,$auth)
     {
-        $input =  $request->all();
         $token = md5(time().$data->name.$data->email);
-        $input['email_token'] = $token;
-        $data->update($input);
+        $data->update(['email_token' => $token]);
         $subject = "Reset Password Request";
         $msg = "Please click this link : ".'<a href="'.route($auth.'.change.token',$token).'">'.route($auth.'.change.token',$token).'</a>'.' to change your password.';
 

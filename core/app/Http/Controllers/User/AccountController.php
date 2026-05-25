@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\User;
 
 use App\{
-    Http\Requests\UserRequest,
+    Http\Requests\ProfileUpdateRequest,
+    Http\Requests\UserBillingAddressRequest,
+    Http\Requests\UserShippingAddressRequest,
     Http\Controllers\Controller,
     Repositories\Front\UserRepository
 };
@@ -59,7 +61,7 @@ class AccountController extends Controller
 
 
 
-    public function profileUpdate(UserRequest $request)
+    public function profileUpdate(ProfileUpdateRequest $request)
     {   
      
         $this->repository->profileUpdate($request);
@@ -75,37 +77,16 @@ class AccountController extends Controller
         ]);
     }
 
-    public function billingSubmit(Request $request)
+    public function billingSubmit(UserBillingAddressRequest $request)
     {
-
-        $request->validate([
-            'bill_address1' => 'required|max:100',
-            'bill_address2' => 'nullable|max:100',
-            'bill_zip'      => 'nullable|max:100',
-            'bill_city'      => 'required|max:100',
-            'bill_company'   => 'nullable|max:100',
-            'bill_country'   => 'required|max:100',
-        ]);
-        $user =  Auth::user();
-        $input = $request->all();
-        $user->update($input);
+        Auth::user()->update($request->safe()->only(UserBillingAddressRequest::ALLOWED_KEYS));
         Session::flash('success',__('Address update successfully'));
         return back();
     }
 
-    public function shippingSubmit(Request $request)
+    public function shippingSubmit(UserShippingAddressRequest $request)
     {
-        $request->validate([
-            'ship_address1' => 'required|max:100',
-            'ship_address2' => 'nullable|max:100',
-            'ship_zip'      => 'nullable|max:100',
-            'ship_city'      => 'required|max:100',
-            'ship_company'   => 'nullable|max:100',
-            'ship_country'   => 'required|max:100',
-        ]);
-        $user =  Auth::user();
-        $input = $request->all();
-        $user->update($input);
+        Auth::user()->update($request->safe()->only(UserShippingAddressRequest::ALLOWED_KEYS));
         Session::flash('success',__('Address update successfully'));
         return back();
     }

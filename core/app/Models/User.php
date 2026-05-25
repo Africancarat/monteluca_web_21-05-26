@@ -2,10 +2,19 @@
 
 namespace App\Models;
 
+use App\Services\EmailVerificationService;
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
+    use HasApiTokens;
+    use MustVerifyEmailTrait;
+    use Notifiable;
+
     protected $fillable = [
         'first_name',
         'last_name',
@@ -27,15 +36,34 @@ class User extends Authenticatable
         'bill_country',
         'bill_company',
         'state_id',
-        'email_verify'
-
-
+        'email_verify',
+        'email_verified_at',
     ];
-
 
     protected $hidden = [
-        'password'
+        'password',
     ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'email_verify' => 'integer',
+    ];
+
+    public function sendEmailVerificationNotification(): bool
+    {
+        return app(EmailVerificationService::class)->send($this);
+    }
+
+    public function markEmailAsVerified(): bool
+    {
+        $result = parent::markEmailAsVerified();
+
+        if ($result) {
+            $this->forceFill(['email_verify' => 1])->save();
+        }
+
+        return $result;
+    }
 
     public function state()
     {
@@ -44,7 +72,7 @@ class User extends Authenticatable
 
     public function products()
     {
-        return $this->hasMany('App\Models\Item','vendor_id')->orderby('id','desc');
+        return $this->hasMany('App\Models\Item', 'vendor_id')->orderby('id', 'desc');
     }
 
     public function orders()
@@ -74,7 +102,7 @@ class User extends Authenticatable
 
     public function withdraws()
     {
-        return $this->hasMany('App\Models\Withdraw','vendor_id')->orderby('id','desc');
+        return $this->hasMany('App\Models\Withdraw', 'vendor_id')->orderby('id', 'desc');
     }
 
     public function displayName()
@@ -82,18 +110,15 @@ class User extends Authenticatable
         return $this->first_name.' '.$this->last_name;
     }
 
-
     public function seller()
     {
         return $this->hasOne('App\Models\Seller');
     }
 
-
     public function wishlistCount()
     {
-        return $this->wishlists()->whereHas('item', function($query) {
-                    $query->where('status', '=', 1);
-                })->count();
+        return $this->wishlists()->whereHas('item', function ($query) {
+            $query->where('status', '=', 1);
+        })->count();
     }
-
 }

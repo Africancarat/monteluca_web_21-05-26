@@ -2,30 +2,20 @@
 
 namespace App\Http\Requests;
 
+use App\Support\ValidationRules;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class ImageUpdateRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
+    public function authorize(): bool
     {
-        return true;
+        return Auth::guard('admin')->check() || Auth::guard('web')->check();
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
+    public function rules(): array
     {
-        return [
-            'photo'  => 'mimes:jpeg,jpg,png,svg'
-        ];
+        return ValidationRules::image('photo', false, 2048);
     }
 
     /**

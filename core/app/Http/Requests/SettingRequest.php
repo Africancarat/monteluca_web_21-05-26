@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\ValidationRules;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SettingRequest extends FormRequest
@@ -27,7 +28,7 @@ class SettingRequest extends FormRequest
             return [
                 'title' => 'required|max:255',
                 'footer_address' => 'required|max:255',
-                'footer_phone' => 'required|max:255',
+                'footer_phone' => ValidationRules::phone('footer_phone')['footer_phone'],
                 'footer_email' => 'required|max:255',
                 'copy_right' => 'required|max:255',
                 'friday_start' => 'required|max:255',
@@ -68,6 +69,7 @@ class SettingRequest extends FormRequest
             'breadcumb_background.mimes'    => __('Background Image type must be jpg,jpeg,png,svg.'),
             'footer_background.mimes'    => __('Background Image type must be jpg,jpeg,png,svg.'),
             'popup_banner.mimes'    => __('Popup Banner must be jpg,jpeg,png,svg.'),
+            'footer_phone.digits' => __('Phone number must contain exactly 10 digits.'),
         ];
     }
 

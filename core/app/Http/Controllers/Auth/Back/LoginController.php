@@ -30,7 +30,9 @@ class LoginController extends Controller
       }
 
       // if unsuccessful, then redirect back to the login with the form data
-      return redirect()->back()->withErrors(__('Email Or Password Doesn\'t Match !'))->withInput($request->except('password'));
+      return redirect()->back()
+        ->withErrors(['login' => __('Email Or Password Doesn\'t Match !')])
+        ->withInput($request->except('login_password'));
     }
 
     public function logout()

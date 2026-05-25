@@ -27,16 +27,18 @@
                   @csrf
                 <div class="card-body ">
                   <h4 class="margin-bottom-1x text-center">{{__('Login')}}</h4>
+
+                  @include('alerts.alerts')
   
                   <div class="form-group input-group">
-                    <input class="form-control" type="email" name="login_email" placeholder="{{ __('Email') }}" value="{{old('login_email')}}"><span class="input-group-addon"><i class="icon-mail"></i></span>
+                    <input class="form-control @error('login_email') is-invalid @enderror" type="email" name="login_email" placeholder="{{ __('Email') }}" value="{{ old('login_email') }}" required autocomplete="email"><span class="input-group-addon"><i class="icon-mail"></i></span>
                   </div>
                   @error('login_email')
                     <p class="text-danger">{{$message}}</p>
                     @enderror
   
                   <div class="form-group input-group">
-                    <input class="form-control" type="password" name="login_password" placeholder="{{ __('Password') }}" ><span class="input-group-addon"><i class="icon-lock"></i></span>
+                    <input class="form-control @error('login_password') is-invalid @enderror" type="password" name="login_password" placeholder="{{ __('Password') }}" required autocomplete="current-password"><span class="input-group-addon"><i class="icon-lock"></i></span>
                   </div>
                   @error('login_password')
                       <p class="text-danger">{{$message}}</p>
