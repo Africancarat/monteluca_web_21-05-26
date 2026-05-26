@@ -112,23 +112,43 @@
                     </a>
                 </li>
                 <li class="{{request()->input('type') == 'Pending' ? 'active' : ''}}">
-                    <a class="sub-link" href="{{ route('back.order.index').'?type='.'Pending' }}">
+                    <a class="sub-link" href="{{ route('back.order.index', ['type' => 'Pending']) }}">
                         <span class="sub-item">{{ __('Pending Orders') }}</span>
                     </a>
                 </li>
                 <li class="{{request()->input('type') == 'In Progress' ? 'active' : ''}}">
-                    <a class="sub-link" href="{{ route('back.order.index').'?type='.'In Progress' }}">
+                    <a class="sub-link" href="{{ route('back.order.index', ['type' => 'In Progress']) }}">
                         <span class="sub-item">{{ __('Progress Orders') }}</span>
+                    </a>
+                </li>
+                <li class="{{request()->input('type') == 'Manufacturing' ? 'active' : ''}}">
+                    <a class="sub-link" href="{{ route('back.order.index', ['type' => 'Manufacturing']) }}">
+                        <span class="sub-item">{{ __('Manufacturing Orders') }}</span>
+                    </a>
+                </li>
+                <li class="{{request()->input('type') == 'Ready to Ship' ? 'active' : ''}}">
+                    <a class="sub-link" href="{{ route('back.order.index', ['type' => 'Ready to Ship']) }}">
+                        <span class="sub-item">{{ __('Ready to Ship Orders') }}</span>
+                    </a>
+                </li>
+                <li class="{{request()->input('type') == 'Shipped' ? 'active' : ''}}">
+                    <a class="sub-link" href="{{ route('back.order.index', ['type' => 'Shipped']) }}">
+                        <span class="sub-item">{{ __('Shipped Orders') }}</span>
                     </a>
                 </li>
 
                 <li class="{{request()->input('type') == 'Delivered' ? 'active' : ''}}">
-                    <a class="sub-link" href="{{ route('back.order.index').'?type='.'Delivered' }}">
+                    <a class="sub-link" href="{{ route('back.order.index', ['type' => 'Delivered']) }}">
                         <span class="sub-item">{{ __('Delivered Orders') }}</span>
                     </a>
                 </li>
+                <li class="{{request()->input('type') == 'Refunded' ? 'active' : ''}}">
+                    <a class="sub-link" href="{{ route('back.order.index', ['type' => 'Refunded']) }}">
+                        <span class="sub-item">{{ __('Refunded Orders') }}</span>
+                    </a>
+                </li>
                 <li class="{{request()->input('type') == 'Canceled' ? 'active' : ''}}">
-                    <a class="sub-link" href="{{ route('back.order.index').'?type='.'Canceled' }}">
+                    <a class="sub-link" href="{{ route('back.order.index', ['type' => 'Canceled']) }}">
                         <span class="sub-item">{{ __('Canceled Orders') }}</span>
                     </a>
                 </li>

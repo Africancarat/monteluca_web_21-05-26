@@ -22,6 +22,7 @@ use App\Helpers\PriceHelper;
 use App\Helpers\SmsHelper;
 use App\Models\Currency;
 use App\Models\Item;
+use App\Models\ReferralCode;
 use App\Models\Setting;
 use App\Models\ShippingService;
 use App\Models\State;
@@ -89,6 +90,10 @@ class CheckoutController extends Controller
         $discount = Session::get('coupon');
         $referral = Session::get('referral');
         $referralBalanceApplied = Session::get('referral_balance_applied');
+        $hasAssignedReferralCode = Auth::check()
+            && Auth::user()->referralCodes()
+                ->where('status', ReferralCode::STATUS_ACTIVE)
+                ->exists();
 
         if (!PriceHelper::Digital()) {
             $shipping = null;
@@ -109,6 +114,7 @@ class CheckoutController extends Controller
         $data['referral'] = $referral;
         $data['referral_balance_applied'] = $referralBalanceApplied;
         $data['referral_balance_available'] = Auth::check() ? (float) Auth::user()->referral_balance : 0;
+        $data['has_assigned_referral_code'] = $hasAssignedReferralCode;
         $data['shipping'] = $shipping;
         $data['tax'] = $total_tax;
         $data['payments'] = PaymentSetting::whereStatus(1)->get();

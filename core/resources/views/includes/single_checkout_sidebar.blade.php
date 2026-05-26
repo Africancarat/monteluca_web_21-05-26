@@ -92,7 +92,7 @@
             <p class="small text-muted mb-0 mt-1 referral-apply-message" role="status"></p>
         </div>
 
-        @auth
+        @if (!empty($has_assigned_referral_code))
             <div class="mt-3 pt-3 border-top">
                 <label class="small text-muted mb-1 d-block">{{ __('Referral balance') }}</label>
                 <p class="small mb-2">
@@ -112,7 +112,7 @@
                 @endif
                 <p class="small text-muted mb-0 mt-1 referral-balance-message" role="status"></p>
             </div>
-        @endauth
+        @endif
     </section>
 
     @if (PriceHelper::CheckDigital() == true)
