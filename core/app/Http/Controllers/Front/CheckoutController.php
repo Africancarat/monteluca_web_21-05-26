@@ -18,6 +18,7 @@ use App\{
 };
 use App\Helpers\CheckoutDiscountHelper;
 use App\Helpers\FinancingHelper;
+use App\Helpers\GstHelper;
 use App\Helpers\PriceHelper;
 use App\Helpers\SmsHelper;
 use App\Models\Currency;
@@ -71,7 +72,6 @@ class CheckoutController extends Controller
         $data['user'] = Auth::user();
         $cart = Session::get('cart');
 
-        $total_tax = 0;
         $cart_total = 0;
         $total = 0;
 
@@ -79,11 +79,9 @@ class CheckoutController extends Controller
 
             $total += ($items['main_price'] + $items['attribute_price']) * $items['qty'];
             $cart_total = $total;
-            $item = Item::findOrFail($key);
-            if ($item->tax) {
-                $total_tax += $item::taxCalculate($item) * $items['qty'];
-            }
         }
+
+        $gst = GstHelper::splitForSubtotal((float) $cart_total);
 
         $shipping = [];
 
@@ -99,7 +97,7 @@ class CheckoutController extends Controller
             $shipping = null;
         }
 
-        $grand_total = ($cart_total  + $total_tax);
+        $grand_total = ($cart_total  + $gst['total_tax']);
         $grand_total = CheckoutDiscountHelper::applyDiscountsToTotal($grand_total);
         $state_tax = Auth::check() && Auth::user()->state_id ? ($cart_total * Auth::user()->state->price) / 100 : 0;
         $grand_total = $grand_total + $state_tax;
@@ -116,7 +114,8 @@ class CheckoutController extends Controller
         $data['referral_balance_available'] = Auth::check() ? (float) Auth::user()->referral_balance : 0;
         $data['has_assigned_referral_code'] = $hasAssignedReferralCode;
         $data['shipping'] = $shipping;
-        $data['tax'] = $total_tax;
+        $data['tax'] = $gst['total_tax'];
+        $data['gst'] = $gst;
         $data['payments'] = PaymentSetting::whereStatus(1)->get();
         $this->attachCheckoutFinanceContext($data);
 
@@ -694,7 +693,6 @@ class CheckoutController extends Controller
         }
 
         $cart = Session::get('cart');
-        $total_tax = 0;
         $cart_total = 0;
         $total = 0;
 
@@ -702,17 +700,14 @@ class CheckoutController extends Controller
 
             $total += ($items['main_price'] + $items['attribute_price']) * $items['qty'];
             $cart_total = $total;
-            $item = Item::findOrFail($key);
-            if ($item->tax) {
-                $total_tax += $item::taxCalculate($item) * $items['qty'];
-            }
         }
+        $gst = GstHelper::splitForSubtotal((float) $cart_total);
 
         $shipping = [];
         if ($shipping_id) {
             $shipping = ShippingService::findOrFail($shipping_id);
         }
-        $grand_total = ($cart_total + ($shipping ? $shipping->price : 0)) + $total_tax;
+        $grand_total = ($cart_total + ($shipping ? $shipping->price : 0)) + $gst['total_tax'];
         $grand_total = CheckoutDiscountHelper::applyDiscountsToTotal($grand_total);
 
         $state_price = 0;
@@ -739,6 +734,10 @@ class CheckoutController extends Controller
         $total_amount = $grand_total + $state_price;
 
         $data['state_price'] = PriceHelper::setCurrencyPrice($state_price);
+        $data['cgst_amount'] = PriceHelper::setCurrencyPrice($gst['cgst_amount']);
+        $data['sgst_amount'] = PriceHelper::setCurrencyPrice($gst['sgst_amount']);
+        $data['cgst_percent'] = $gst['cgst_percent'];
+        $data['sgst_percent'] = $gst['sgst_percent'];
         $data['grand_total'] = PriceHelper::setCurrencyPrice($total_amount);
 
         return response()->json($data);
@@ -756,7 +755,6 @@ class CheckoutController extends Controller
         }
 
         $cart = Session::get('cart');
-        $total_tax = 0;
         $cart_total = 0;
         $total = 0;
 
@@ -764,15 +762,12 @@ class CheckoutController extends Controller
 
             $total += ($items['main_price'] + $items['attribute_price']) * $items['qty'];
             $cart_total = $total;
-            $item = Item::findOrFail($key);
-            if ($item->tax) {
-                $total_tax += $item::taxCalculate($item) * $items['qty'];
-            }
         }
+        $gst = GstHelper::splitForSubtotal((float) $cart_total);
 
         $shipping = ShippingService::findOrFail($shipping_id);
 
-        $grand_total = ($cart_total + ($shipping ? $shipping->price : 0)) + $total_tax;
+        $grand_total = ($cart_total + ($shipping ? $shipping->price : 0)) + $gst['total_tax'];
         $grand_total = CheckoutDiscountHelper::applyDiscountsToTotal($grand_total);
 
         $state_price = 0;
@@ -800,6 +795,10 @@ class CheckoutController extends Controller
 
         $data['state_price'] = PriceHelper::setCurrencyPrice($state_price);
         $data['shipping_price'] = PriceHelper::setCurrencyPrice($shipping->price);
+        $data['cgst_amount'] = PriceHelper::setCurrencyPrice($gst['cgst_amount']);
+        $data['sgst_amount'] = PriceHelper::setCurrencyPrice($gst['sgst_amount']);
+        $data['cgst_percent'] = $gst['cgst_percent'];
+        $data['sgst_percent'] = $gst['sgst_percent'];
         $data['grand_total'] = PriceHelper::setCurrencyPrice($total_amount);
 
         return response()->json($data);

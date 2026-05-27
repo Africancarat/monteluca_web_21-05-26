@@ -12,6 +12,15 @@
                     <div class="product-button-group">
                         <a class="product-button wishlist_store" href="{{route('user.wishlist.store',$item->id)}}" title="{{__('Wishlist')}}"><i class="icon-heart"></i></a>
                         @include('includes.item_footer',['sitem' => $item])
+                        <button
+                                type="button"
+                                class="product-button compare-btn"
+                                onclick="addDiamondCompare({{ $item->id }})"
+                                title="{{ __('Compare') }}">
+
+                            <i class="icon-repeat"></i>
+
+                        </button>
                     </div>
                 </div>
                 <div class="product-card-body">
@@ -89,4 +98,48 @@
     </div>
 </div>
 
-<script type="text/javascript" src="{{asset('assets/front/js/catalog.js')}}"></script>
+<script src="{{ asset('assets/front/js/catalog.js') }}"></script>
+
+<script>
+
+    window.addDiamondCompare = function(itemId){
+
+        fetch(@json(route('diamonds.compare.add')),{
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json',
+                'X-CSRF-TOKEN':
+                @json(csrf_token()),
+                Accept:'application/json'
+            },
+            body:JSON.stringify({
+                item_id:itemId
+            })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if(data.count !== undefined){
+                    document
+                        .querySelectorAll('.compare_count')
+                        .forEach(el => {
+                            el.textContent =
+                                String(data.count);
+                        });
+                }
+                if(window.iziToast && data.message){
+                    iziToast.success({
+                        message:data.message,
+                        position:'topRight',
+                        timeout:3200
+                    });
+                }
+            })
+            .catch(err => {
+                console.log(err);
+                iziToast.error({
+                    message:'Compare failed',
+                    position:'topRight'
+                });
+            });
+    }
+</script>

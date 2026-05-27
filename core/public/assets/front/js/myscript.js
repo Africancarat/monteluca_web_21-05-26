@@ -1222,6 +1222,14 @@ $(document).on('change', '#state_id_select', function () {
     $.get(url, function (response) {
         $('.set__state_price_tr').removeClass('d-none');
         $('.set__state_price').text(response.state_price);
+        if (response.cgst_amount !== undefined) {
+            $('.cgst-row').removeClass('d-none');
+            $('.cgst-amount').text(response.cgst_amount);
+        }
+        if (response.sgst_amount !== undefined) {
+            $('.sgst-row').removeClass('d-none');
+            $('.sgst-amount').text(response.sgst_amount);
+        }
         $('.grand_total_set').text(response.grand_total);
         $('.state_id_setup').val(state_id);
         $(".state_message").addClass('d-none');
@@ -1237,6 +1245,14 @@ $(document).on('change', '#shipping_id_select', function () {
     $.get(url, function (response) {
         $('.set__shipping_price_tr').removeClass('d-none');
         $('.set__shipping_price').text(response.shipping_price);
+        if (response.cgst_amount !== undefined) {
+            $('.cgst-row').removeClass('d-none');
+            $('.cgst-amount').text(response.cgst_amount);
+        }
+        if (response.sgst_amount !== undefined) {
+            $('.sgst-row').removeClass('d-none');
+            $('.sgst-amount').text(response.sgst_amount);
+        }
         $('.grand_total_set').text(response.grand_total);
         $('.shipping_id_setup').val(shipping_id);
         $(".shipping_message").addClass('d-none');
