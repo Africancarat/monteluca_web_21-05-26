@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" media="screen" href="{{asset('assets/front/css/plugins.min.css')}}">
-
 </head>
 <body>
     <section class="fourzerofour  pt-4 mt-5">

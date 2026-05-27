@@ -37,8 +37,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'bill_company',
         'state_id',
         'email_verify',
-        'email_verified_at',
+//        'email_verified_at',
+        'referral_balance',
     ];
+
 
     protected $hidden = [
         'password',
@@ -47,6 +49,8 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
         'email_verify' => 'integer',
+        'referral_balance' => 'decimal:2',
+
     ];
 
     public function sendEmailVerificationNotification(): bool
@@ -103,6 +107,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function withdraws()
     {
         return $this->hasMany('App\Models\Withdraw', 'vendor_id')->orderby('id', 'desc');
+    }
+
+    public function referralCodes()
+    {
+        return $this->hasMany(ReferralCode::class);
+    }
+
+    public function referralTransactionsAsReferrer()
+    {
+        return $this->hasMany(ReferralTransaction::class, 'referrer_user_id');
     }
 
     public function displayName()

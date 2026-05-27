@@ -14,9 +14,33 @@
     <meta name="twitter:image" content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
     <meta name="twitter:description" content="{{ $item->meta_description }}">
 
-    <meta name="og:title" content="{{ $item->title }}">
-    <meta name="og:image" content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
-    <meta name="og:description" content="{{ $item->meta_description }}">
+{{--    <meta name="og:title" content="{{ $item->title }}">--}}
+{{--    <meta name="og:image" content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">--}}
+{{--    <meta name="og:description" content="{{ $item->meta_description }}">--}}
+    {{-- Open Graph --}}
+    <meta property="og:title"
+          content="{{ Str::limit($item->title ?? $item->name,60) }}">
+
+    <meta property="og:description"
+          content="{{ Str::limit(strip_tags($item->meta_description ?? $item->details),150) }}">
+
+    <meta property="og:image"
+          content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
+
+    <meta property="og:image:secure_url"
+          content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
+
+    <meta property="og:image:width"
+          content="1200">
+
+    <meta property="og:image:height"
+          content="630">
+
+    <meta property="og:url"
+          content="{{ request()->url() }}">
+
+    <meta property="og:type"
+          content="product">
 @endsection
 
 

@@ -16,11 +16,13 @@ use App\{
     Traits\CashOnDeliveryCheckout,
     Traits\BankCheckout,
 };
+use App\Helpers\CheckoutDiscountHelper;
 use App\Helpers\FinancingHelper;
 use App\Helpers\PriceHelper;
 use App\Helpers\SmsHelper;
 use App\Models\Currency;
 use App\Models\Item;
+use App\Models\ReferralCode;
 use App\Models\Setting;
 use App\Models\ShippingService;
 use App\Models\State;
@@ -85,17 +87,20 @@ class CheckoutController extends Controller
 
         $shipping = [];
 
-        $discount = [];
-        if (Session::has('coupon')) {
-            $discount = Session::get('coupon');
-        }
+        $discount = Session::get('coupon');
+        $referral = Session::get('referral');
+        $referralBalanceApplied = Session::get('referral_balance_applied');
+        $hasAssignedReferralCode = Auth::check()
+            && Auth::user()->referralCodes()
+                ->where('status', ReferralCode::STATUS_ACTIVE)
+                ->exists();
 
         if (!PriceHelper::Digital()) {
             $shipping = null;
         }
 
         $grand_total = ($cart_total  + $total_tax);
-        $grand_total = $grand_total - ($discount ? $discount['discount'] : 0);
+        $grand_total = CheckoutDiscountHelper::applyDiscountsToTotal($grand_total);
         $state_tax = Auth::check() && Auth::user()->state_id ? ($cart_total * Auth::user()->state->price) / 100 : 0;
         $grand_total = $grand_total + $state_tax;
 
@@ -106,6 +111,10 @@ class CheckoutController extends Controller
         $data['cart_total'] = $cart_total;
         $data['grand_total'] = $total_amount;
         $data['discount'] = $discount;
+        $data['referral'] = $referral;
+        $data['referral_balance_applied'] = $referralBalanceApplied;
+        $data['referral_balance_available'] = Auth::check() ? (float) Auth::user()->referral_balance : 0;
+        $data['has_assigned_referral_code'] = $hasAssignedReferralCode;
         $data['shipping'] = $shipping;
         $data['tax'] = $total_tax;
         $data['payments'] = PaymentSetting::whereStatus(1)->get();
@@ -703,13 +712,8 @@ class CheckoutController extends Controller
         if ($shipping_id) {
             $shipping = ShippingService::findOrFail($shipping_id);
         }
-        $discount = [];
-        if (Session::has('coupon')) {
-            $discount = Session::get('coupon');
-        }
-
         $grand_total = ($cart_total + ($shipping ? $shipping->price : 0)) + $total_tax;
-        $grand_total = $grand_total - ($discount ? $discount['discount'] : 0);
+        $grand_total = CheckoutDiscountHelper::applyDiscountsToTotal($grand_total);
 
         $state_price = 0;
         if ($state_id) {
@@ -768,13 +772,8 @@ class CheckoutController extends Controller
 
         $shipping = ShippingService::findOrFail($shipping_id);
 
-        $discount = [];
-        if (Session::has('coupon')) {
-            $discount = Session::get('coupon');
-        }
-
         $grand_total = ($cart_total + ($shipping ? $shipping->price : 0)) + $total_tax;
-        $grand_total = $grand_total - ($discount ? $discount['discount'] : 0);
+        $grand_total = CheckoutDiscountHelper::applyDiscountsToTotal($grand_total);
 
         $state_price = 0;
         if ($state_id && $state_id != 'undefined') {

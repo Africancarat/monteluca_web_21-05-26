@@ -11,6 +11,7 @@ use App\{
 };
 use App\Helpers\ImageHelper;
 use App\Models\Order;
+use App\Models\ReferralCode;
 use Illuminate\Http\Request;
 use App\Models\Subscriber;
 use App\Models\User;
@@ -37,12 +38,18 @@ class AccountController extends Controller
 
     public function index()
     {
+        $user = Auth::user();
+
         return view('user.dashboard.dashboard',[
-            'allorders' => Order::whereUserId(Auth::user()->id)->count(),
-            'pending' => Order::whereUserId(Auth::user()->id)->whereOrderStatus('pending')->count(),
-            'progress' => Order::whereUserId(Auth::user()->id)->whereOrderStatus('In Progress')->count(),
-            'delivered' => Order::whereUserId(Auth::user()->id)->whereOrderStatus('Delivered')->count(),
-            'canceled' => Order::whereUserId(Auth::user()->id)->whereOrderStatus('Canceled')->count()
+            'allorders' => Order::whereUserId($user->id)->count(),
+            'pending' => Order::whereUserId($user->id)->whereOrderStatus('pending')->count(),
+            'progress' => Order::whereUserId($user->id)->whereOrderStatus('In Progress')->count(),
+            'delivered' => Order::whereUserId($user->id)->whereOrderStatus('Delivered')->count(),
+            'canceled' => Order::whereUserId($user->id)->whereOrderStatus('Canceled')->count(),
+            'assignedReferralCodes' => $user->referralCodes()
+                ->where('status', ReferralCode::STATUS_ACTIVE)
+                ->latest()
+                ->get(),
 
         ]);
 

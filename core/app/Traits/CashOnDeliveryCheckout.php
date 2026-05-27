@@ -19,12 +19,14 @@ use App\Models\State;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use App\Helpers\CheckoutDiscountHelper;
 use App\Repositories\Front\CartRepository;
 use Illuminate\Support\Str;
 
 trait CashOnDeliveryCheckout
 {
     use FinalizesCheckoutInventory;
+    use HandlesReferralCheckout;
 
     public function cashOnDeliverySubmit($data)
     {
@@ -56,12 +58,9 @@ trait CashOnDeliveryCheckout
             $shipping = ShippingService::findOrFail($data['shipping_id']);
         }
 
-        $discount = [];
-        if (Session::has('coupon')) {
-            $discount = Session::get('coupon');
-        }
+        $discount = CheckoutDiscountHelper::orderDiscountPayload();
         $grand_total = ($cart_total + ($shipping ? $shipping->price : 0)) + $total_tax;
-        $grand_total = $grand_total - ($discount ? $discount['discount'] : 0);
+        $grand_total = $this->applyCheckoutDiscounts($grand_total);
         $grand_total += PriceHelper::StatePrce($data['state_id'], $cart_total);
         $total_amount = PriceHelper::setConvertPrice($grand_total);
         $orderData['state'] =  $data['state_id'] ? json_encode(State::findOrFail($data['state_id']), true) : null;
@@ -115,7 +114,7 @@ trait CashOnDeliveryCheckout
             $email->sendTemplateMail($emailData, "template");
         }
         
-        if ($discount) {
+        if (! empty($discount['code']['id'])) {
             $coupon_id = $discount['code']['id'];
             $get_coupon = PromoCode::findOrFail($coupon_id);
             $get_coupon->no_of_times -= 1;
@@ -131,9 +130,7 @@ trait CashOnDeliveryCheckout
         }
 
         Session::put('order_id', $order->id);
-        Session::forget('cart');
-        Session::forget('discount');
-        Session::forget('coupon');
+        $this->clearCheckoutSessions();
         return [
             'status' => true
         ];

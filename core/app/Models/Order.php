@@ -58,4 +58,9 @@ class Order extends Model
     	return $this->hasMany('App\Models\Notification','order_id');
     }
 
+    public function referralTransaction()
+    {
+        return $this->hasOne(ReferralTransaction::class);
+    }
+
 }

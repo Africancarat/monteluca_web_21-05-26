@@ -34,22 +34,34 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr>
-                                    <td>{user_name}</td>
-                                    <td>{{ __('Name of the customer') }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{order_cost}</td>
-                                    <td>{{ __('Order Cost') }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{site_title}</td>
-                                    <td>{{ __('Site Title') }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{transaction_number}</td>
-                                    <td>{{ __('Order Transaction Number') }}</td>
-                                </tr>
+                                @foreach ([
+                                    '{user_name}' => __('Name of the customer'),
+                                    '{order_cost}' => __('Order Cost'),
+                                    '{site_title}' => __('Site Title'),
+                                    '{transaction_number}' => __('Order Transaction Number'),
+                                    '{product_list}' => __('All products with quantity and price'),
+                                    '{shipping_address}' => __('Shipping address'),
+                                    '{payment_method}' => __('Payment method'),
+                                    '{order_status}' => __('Order status'),
+                                    '{subtotal}' => __('Order subtotal'),
+                                    '{discount}' => __('Discount amount'),
+                                    '{tax}' => __('Tax amount'),
+                                    '{shipping_cost}' => __('Shipping cost'),
+                                    '{grand_total}' => __('Grand total'),
+                                    '{metal_type}' => __('Metal type'),
+                                    '{diamond_shape}' => __('Diamond shape'),
+                                    '{carat_weight}' => __('Carat weight'),
+                                    '{clarity_grade}' => __('Clarity grade'),
+                                    '{color_grade}' => __('Color grade'),
+                                    '{estimated_delivery}' => __('Estimated delivery'),
+                                    '{order_date}' => __('Order date'),
+                                    '{site_url}' => __('Site URL'),
+                                ] as $code => $meaning)
+                                    <tr>
+                                        <td>{{ $code }}</td>
+                                        <td>{{ $meaning }}</td>
+                                    </tr>
+                                @endforeach
                                 </tbody>
                             </table>
                             </div>

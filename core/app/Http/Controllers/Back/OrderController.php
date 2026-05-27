@@ -11,6 +11,7 @@ use App\{
 use App\Helpers\SmsHelper;
 use App\Models\Notification;
 use App\Services\OrderInventoryService;
+use App\Services\OrderStatusMailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -131,13 +132,17 @@ class OrderController extends Controller
             }
         }
         if($field == 'order_status'){
-            if($order['order_status'] == 'Delivered'){
+            if($order['order_status'] == 'Delivered' && $value == 'Delivered'){
                 return redirect()->route('back.order.index')->withErrors(__('Order is already Delivered.'));
             }
         }
 
         $previousStatus = $order->order_status;
         $previousPayment = $order->payment_status;
+
+        if ($field === 'order_status' && $previousStatus === $value) {
+            return redirect()->route('back.order.index')->withErrors(__('Order status is already set.'));
+        }
 
         $order->update([$field => $value]);
 
@@ -160,6 +165,10 @@ class OrderController extends Controller
             $this->setPromoCode($order);
         }
         $this->setTrackOrder($order);
+
+        if ($field === 'order_status' && $previousStatus !== $value) {
+            app(OrderStatusMailService::class)->send($order->fresh(), $value);
+        }
         
         $sms = new SmsHelper();
         $user_number = $order->user->phone;
@@ -173,71 +182,181 @@ class OrderController extends Controller
     /**
      * Custom Function
      */
+//    public function setTrackOrder($order)
+//    {
+//
+//        if($order->order_status == 'In Progress'){
+//            if(!TrackOrder::whereOrderId($order->id)->whereTitle('In Progress')->exists()){
+//                TrackOrder::create([
+//                    'title' => 'In Progress',
+//                    'order_id' => $order->id
+//                ]);
+//            }
+//        }
+//        if($order->order_status == 'Canceled'){
+//            if(!TrackOrder::whereOrderId($order->id)->whereTitle('Canceled')->exists()){
+//
+//                if(!TrackOrder::whereOrderId($order->id)->whereTitle('In Progress')->exists()){
+//                    TrackOrder::create([
+//                        'title' => 'In Progress',
+//                        'order_id' => $order->id
+//                    ]);
+//                }
+//                if(!TrackOrder::whereOrderId($order->id)->whereTitle('Delivered')->exists()){
+//                    TrackOrder::create([
+//                        'title' => 'Delivered',
+//                        'order_id' => $order->id
+//                    ]);
+//                }
+//
+//                if(!TrackOrder::whereOrderId($order->id)->whereTitle('Canceled')->exists()){
+//                    TrackOrder::create([
+//                        'title' => 'Canceled',
+//                        'order_id' => $order->id
+//                    ]);
+//                }
+//
+//                if($order->order_status == 'Manufacturing'){
+//                    TrackOrder::firstOrCreate([
+//                        'title'=>'Manufacturing',
+//                        'order_id'=>$order->id
+//                    ]);
+//                }
+//
+//                if($order->order_status == 'Ready to Ship'){
+//                    TrackOrder::firstOrCreate([
+//                        'title'=>'Ready to Ship',
+//                        'order_id'=>$order->id
+//                    ]);
+//                }
+//
+//                if($order->order_status == 'Shipped'){
+//                    TrackOrder::firstOrCreate([
+//                        'title'=>'Shipped',
+//                        'order_id'=>$order->id
+//                    ]);
+//                }
+//
+//                if($order->order_status == 'Refunded'){
+//                    TrackOrder::firstOrCreate([
+//                        'title'=>'Refunded',
+//                        'order_id'=>$order->id
+//                    ]);
+//                }
+//
+//            }
+//        }
+//
+//        if($order->order_status == 'Delivered'){
+//
+//            if(!TrackOrder::whereOrderId($order->id)->whereTitle('In Progress')->exists()){
+//                TrackOrder::create([
+//                    'title' => 'In Progress',
+//                    'order_id' => $order->id
+//                ]);
+//            }
+//
+//            if(!TrackOrder::whereOrderId($order->id)->whereTitle('Delivered')->exists()){
+//                TrackOrder::create([
+//                    'title' => 'Delivered',
+//                    'order_id' => $order->id
+//                ]);
+//            }
+//        }
+//    }
     public function setTrackOrder($order)
     {
 
-        if($order->order_status == 'In Progress'){
-            if(!TrackOrder::whereOrderId($order->id)->whereTitle('In Progress')->exists()){
-                TrackOrder::create([
-                    'title' => 'In Progress',
-                    'order_id' => $order->id
+        $statuses = [
+            'In Progress',
+            'Manufacturing',
+            'Ready to Ship',
+            'Shipped',
+            'Delivered',
+            'Refunded',
+            'Canceled'
+        ];
+
+
+        foreach ($statuses as $status) {
+
+            if ($order->order_status == $status) {
+
+                TrackOrder::firstOrCreate([
+                    'order_id' => $order->id,
+                    'title'    => $status
                 ]);
-            }
-        }
-        if($order->order_status == 'Canceled'){
-            if(!TrackOrder::whereOrderId($order->id)->whereTitle('Canceled')->exists()){
-
-                if(!TrackOrder::whereOrderId($order->id)->whereTitle('In Progress')->exists()){
-                    TrackOrder::create([
-                        'title' => 'In Progress',
-                        'order_id' => $order->id
-                    ]);
-                }
-                if(!TrackOrder::whereOrderId($order->id)->whereTitle('Delivered')->exists()){
-                    TrackOrder::create([
-                        'title' => 'Delivered',
-                        'order_id' => $order->id
-                    ]);
-                }
-
-                if(!TrackOrder::whereOrderId($order->id)->whereTitle('Canceled')->exists()){
-                    TrackOrder::create([
-                        'title' => 'Canceled',
-                        'order_id' => $order->id
-                    ]);
-                }
-
 
             }
         }
 
-        if($order->order_status == 'Delivered'){
 
-            if(!TrackOrder::whereOrderId($order->id)->whereTitle('In Progress')->exists()){
-                TrackOrder::create([
-                    'title' => 'In Progress',
-                    'order_id' => $order->id
-                ]);
-            }
+        /*
+        |--------------------------------------------------------------------------
+        | Ensure previous stages exist
+        |--------------------------------------------------------------------------
+        */
 
-            if(!TrackOrder::whereOrderId($order->id)->whereTitle('Delivered')->exists()){
-                TrackOrder::create([
-                    'title' => 'Delivered',
-                    'order_id' => $order->id
-                ]);
-            }
+        if ($order->order_status == 'Delivered') {
+
+            TrackOrder::firstOrCreate([
+                'title' => 'In Progress',
+                'order_id' => $order->id
+            ]);
+
+            TrackOrder::firstOrCreate([
+                'title' => 'Manufacturing',
+                'order_id' => $order->id
+            ]);
+
+            TrackOrder::firstOrCreate([
+                'title' => 'Ready to Ship',
+                'order_id' => $order->id
+            ]);
+
+            TrackOrder::firstOrCreate([
+                'title' => 'Shipped',
+                'order_id' => $order->id
+            ]);
+
+            TrackOrder::firstOrCreate([
+                'title' => 'Delivered',
+                'order_id' => $order->id
+            ]);
         }
+
+
+        if ($order->order_status == 'Canceled') {
+
+            TrackOrder::firstOrCreate([
+                'title' => 'Canceled',
+                'order_id' => $order->id
+            ]);
+
+        }
+
+
+        if ($order->order_status == 'Refunded') {
+
+            TrackOrder::firstOrCreate([
+                'title' => 'Refunded',
+                'order_id' => $order->id
+            ]);
+
+        }
+
     }
-
 
     public function setPromoCode($order)
     {
 
         $discount = json_decode($order->discount, true);
-        if($discount != null){
+        if ($discount != null && ! empty($discount['code']['id'])) {
             $code = PromoCode::find($discount['code']['id']);
-            $code->no_of_times--;
-            $code->update();
+            if ($code) {
+                $code->no_of_times--;
+                $code->update();
+            }
         }
     }
 
