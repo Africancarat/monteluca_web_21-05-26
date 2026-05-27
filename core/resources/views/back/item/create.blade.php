@@ -435,6 +435,35 @@
                             <input type="text" name="certificate_number" id="certificate_number" class="form-control"
                                 value="{{ old('certificate_number') }}" placeholder="{{ __('e.g. IGI-123456789') }}">
                         </div>
+                        {{-- ADD THIS AFTER "Certificate Number" FIELD INSIDE diamond_details_box --}}
+
+                        <div class="form-group">
+                            <label for="certificate_report_pdf">{{ __('Certificate PDF') }}</label>
+
+                            <input type="file"
+                                   name="certificate_report_pdf"
+                                   id="certificate_report_pdf"
+                                   class="form-control"
+                                   accept=".pdf">
+
+                            <small class="text-muted">
+                                {{ __('Upload IGI/GIA/SGL certificate PDF') }}
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="certificate_report_image">{{ __('Certificate Image') }}</label>
+
+                            <input type="file"
+                                   name="certificate_report_image"
+                                   id="certificate_report_image"
+                                   class="form-control"
+                                   accept="image/*">
+
+                            <small class="text-muted">
+                                {{ __('Upload certificate image') }}
+                            </small>
+                        </div>
 
                         <div class="form-group">
                             <label for="video_360_url">{{ __('Video 360 URL') }}</label>
