@@ -11,6 +11,7 @@ use App\{
 use App\Helpers\SmsHelper;
 use App\Models\Notification;
 use App\Services\OrderInventoryService;
+use App\Services\OrderStatusMailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -131,13 +132,17 @@ class OrderController extends Controller
             }
         }
         if($field == 'order_status'){
-            if($order['order_status'] == 'Delivered'){
+            if($order['order_status'] == 'Delivered' && $value == 'Delivered'){
                 return redirect()->route('back.order.index')->withErrors(__('Order is already Delivered.'));
             }
         }
 
         $previousStatus = $order->order_status;
         $previousPayment = $order->payment_status;
+
+        if ($field === 'order_status' && $previousStatus === $value) {
+            return redirect()->route('back.order.index')->withErrors(__('Order status is already set.'));
+        }
 
         $order->update([$field => $value]);
 
@@ -160,6 +165,10 @@ class OrderController extends Controller
             $this->setPromoCode($order);
         }
         $this->setTrackOrder($order);
+
+        if ($field === 'order_status' && $previousStatus !== $value) {
+            app(OrderStatusMailService::class)->send($order->fresh(), $value);
+        }
         
         $sms = new SmsHelper();
         $user_number = $order->user->phone;

@@ -556,12 +556,11 @@ class FrontendController extends Controller
 
         if ($order) {
             return view('user.order.track', [
-                'numbers' => 3,
-                'track_orders' => TrackOrder::whereOrderId($order->id)->get()->toArray()
+                'order' => $order,
+                'track_orders' => TrackOrder::whereOrderId($order->id)->orderBy('created_at')->get(),
             ]);
         } else {
             return view('user.order.track', [
-                'numbers' => 3,
                 'error' => 1,
             ]);
         }
