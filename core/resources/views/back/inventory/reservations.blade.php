@@ -42,6 +42,7 @@
                             <th>{{ __('User') }}</th>
                             <th>{{ __('Session') }}</th>
                             <th>{{ __('Status') }}</th>
+                            <th>{{ __('Action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -67,17 +68,27 @@
                                 </td>
                                 <td>
                                     @if ($lock->user)
-                                        {{ $lock->user->name ?? $lock->user->email }}
+                                        {{ $lock->user->first_name ?? $lock->user->email }}
                                     @else
                                         {{ __('Guest') }}
                                     @endif
                                 </td>
                                 <td><small>{{ Str::limit($lock->session_id, 16) }}</small></td>
                                 <td><span class="badge badge-secondary">{{ $lock->status }}</span></td>
+                                <td>
+                                    @if ($lock->status === 'reserved')
+                                        <form action="{{ route('back.inventory.release', $lock->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-danger btn-sm">{{ __('Release') }}</button>
+                                        </form>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">{{ __('No reservations found.') }}</td>
+                                <td colspan="8" class="text-center text-muted">{{ __('No reservations found.') }}</td>
                             </tr>
                         @endforelse
                     </tbody>

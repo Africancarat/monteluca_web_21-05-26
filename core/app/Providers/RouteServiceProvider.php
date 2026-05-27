@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Cache\RateLimiting\Limit;
 
-class RouteServiceProvider extends ServiceProvider
+class
+RouteServiceProvider extends ServiceProvider
 {
     /**
      * This namespace is applied to your controller routes.
