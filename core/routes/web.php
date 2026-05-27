@@ -72,6 +72,7 @@ Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
             Route::get('get/childcategory', 'Back\ItemController@getChildCategory')->name('back.get.childcategory');
             Route::get('item/complete-the-look/search', 'Back\ItemController@searchCompleteTheLook')->name('back.item.complete_the_look.search');
             Route::get('inventory/reservations', 'Back\InventoryReservationController@index')->name('back.inventory.reservations.index');
+            Route::post('inventory/reservations/{id}/release', 'Back\InventoryReservationController@release')->name('back.inventory.release');
             Route::get('stock/out/product', 'Back\ItemController@stockOut')->name('back.item.stock.out');
             Route::resource('item', 'Back\ItemController', ['as' => 'back', 'except' => 'show', 'getsubCategory']);
             Route::get('item/highlight/{item}', 'Back\ItemController@highlight')->name('back.item.highlight');

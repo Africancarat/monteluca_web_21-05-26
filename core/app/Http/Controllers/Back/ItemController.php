@@ -17,7 +17,7 @@ use App\Models\ChieldCategory;
 use App\Models\Currency;
 use App\Models\Subcategory;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Storage;
 class ItemController extends Controller
 {
 
@@ -209,25 +209,92 @@ class ItemController extends Controller
         // Diamond details (one-to-one) — independent of item type.
         $item = Item::find($item_id);
         if ($item) {
+
             $hasDiamond = (bool) $request->input('has_diamond');
+
             if ($hasDiamond) {
+
+                $certificatePdfPath = null;
+                $certificateImagePath = null;
+
+                /*
+                |--------------------------------------------------------------------------
+                | Certificate PDF Upload
+                |--------------------------------------------------------------------------
+                */
+
+                if ($request->hasFile('certificate_report_pdf')) {
+
+                    $pdf = $request->file('certificate_report_pdf');
+
+                    $pdfName = time() . '_pdf_' . $pdf->getClientOriginalName();
+
+                    $pdf->storeAs(
+                        'public/certificates',
+                        $pdfName
+                    );
+
+                    $certificatePdfPath = 'certificates/' . $pdfName;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Certificate Image Upload
+                |--------------------------------------------------------------------------
+                */
+
+                if ($request->hasFile('certificate_report_image')) {
+
+                    $image = $request->file('certificate_report_image');
+
+                    $imageName = time() . '_image_' . $image->getClientOriginalName();
+
+                    $image->storeAs(
+                        'public/certificates',
+                        $imageName
+                    );
+
+                    $certificateImagePath = 'certificates/' . $imageName;
+                }
+
                 DiamondAttribute::updateOrCreate(
+
                     ['item_id' => $item->id],
+
                     [
+
                         'carat_weight' => $request->input('carat_weight'),
-                        'shape' => Item::normalizeJewelryOptionList($request->input('shape')),
+
+                        'shape' => Item::normalizeJewelryOptionList(
+                            $request->input('shape')
+                        ),
+
                         'cut_grade' => $request->input('cut_grade'),
+
                         'color_grade' => $request->input('color_grade'),
+
                         'clarity_grade' => $request->input('clarity_grade'),
+
                         'lab' => $request->input('lab'),
+
                         'certificate_number' => $request->input('certificate_number'),
+
                         'video_360_url' => $request->input('video_360_url'),
+
                         'is_lab_grown' => (bool) $request->input('is_lab_grown'),
+
+                        'certificate_report_pdf' => $certificatePdfPath,
+
+                        'certificate_report_image' => $certificateImagePath,
+
                     ]
                 );
+
             } else {
+
                 DiamondAttribute::where('item_id', $item->id)->delete();
             }
+
         }
 
         if ($request->is_button == 0) {
@@ -268,21 +335,108 @@ class ItemController extends Controller
         // Diamond details (one-to-one) — independent of item type.
         $hasDiamond = (bool) $request->input('has_diamond');
         if ($hasDiamond) {
+
+            $diamond = DiamondAttribute::firstOrNew([
+                'item_id' => $item->id
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Existing paths preserve
+            |--------------------------------------------------------------------------
+            */
+
+            $certificatePdfPath = $diamond->certificate_report_pdf;
+
+            $certificateImagePath = $diamond->certificate_report_image;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Replace PDF
+            |--------------------------------------------------------------------------
+            */
+
+            if ($request->hasFile('certificate_report_pdf')) {
+
+                if ($certificatePdfPath &&
+                    Storage::exists('public/' . $certificatePdfPath)) {
+
+                    Storage::delete('public/' . $certificatePdfPath);
+                }
+
+                $pdf = $request->file('certificate_report_pdf');
+
+                $pdfName = time() . '_pdf_' . $pdf->getClientOriginalName();
+
+                $pdf->storeAs(
+                    'public/certificates',
+                    $pdfName
+                );
+
+                $certificatePdfPath = 'certificates/' . $pdfName;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Replace Image
+            |--------------------------------------------------------------------------
+            */
+
+            if ($request->hasFile('certificate_report_image')) {
+
+                if ($certificateImagePath &&
+                    Storage::exists('public/' . $certificateImagePath)) {
+
+                    Storage::delete('public/' . $certificateImagePath);
+                }
+
+                $image = $request->file('certificate_report_image');
+
+                $imageName = time() . '_image_' . $image->getClientOriginalName();
+
+                $image->storeAs(
+                    'public/certificates',
+                    $imageName
+                );
+
+                $certificateImagePath = 'certificates/' . $imageName;
+            }
+
             DiamondAttribute::updateOrCreate(
+
                 ['item_id' => $item->id],
+
                 [
+
                     'carat_weight' => $request->input('carat_weight'),
-                    'shape' => Item::normalizeJewelryOptionList($request->input('shape')),
+
+                    'shape' => Item::normalizeJewelryOptionList(
+                        $request->input('shape')
+                    ),
+
                     'cut_grade' => $request->input('cut_grade'),
+
                     'color_grade' => $request->input('color_grade'),
+
                     'clarity_grade' => $request->input('clarity_grade'),
+
                     'lab' => $request->input('lab'),
+
                     'certificate_number' => $request->input('certificate_number'),
+
                     'video_360_url' => $request->input('video_360_url'),
+
                     'is_lab_grown' => (bool) $request->input('is_lab_grown'),
+
+                    'certificate_report_pdf' => $certificatePdfPath,
+
+                    'certificate_report_image' => $certificateImagePath,
+
                 ]
             );
+
         } else {
+
             DiamondAttribute::where('item_id', $item->id)->delete();
         }
 

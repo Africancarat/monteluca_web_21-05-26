@@ -114,6 +114,9 @@ class ItemRequest extends FormRequest
             'clarity_grade.*' => 'nullable|string|max:50',
             'lab'             => $this->has_diamond ? 'nullable|string|max:50' : 'nullable|string|max:50',
             'certificate_number' => $this->has_diamond ? 'nullable|string|max:120' : 'nullable|string|max:120',
+            'certificate_report_pdf' => 'nullable|mimes:pdf|max:5120',
+
+            'certificate_report_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
             'video_360_url'   => $this->has_diamond ? 'nullable|string|max:512' : 'nullable|string|max:512',
             'is_lab_grown'    => 'nullable|boolean',
             'gold_weight'     => 'nullable|numeric|min:0',

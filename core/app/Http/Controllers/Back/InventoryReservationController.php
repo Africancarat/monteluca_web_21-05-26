@@ -14,6 +14,19 @@ class InventoryReservationController extends Controller
         $this->middleware('adminlocalize');
     }
 
+    public function release(int $id)
+    {
+        $lock = InventorySoftLock::findOrFail($id);
+
+        if ($lock->status !== InventorySoftLock::STATUS_RESERVED) {
+            return back()->withError(__('Reservation is not active or was already released.'));
+        }
+
+        $lock->update(['status' => InventorySoftLock::STATUS_RELEASED]);
+
+        return back()->withSuccess(__('Reservation released successfully.'));
+    }
+
     public function index(Request $request)
     {
         $status = $request->get('status', InventorySoftLock::STATUS_RESERVED);

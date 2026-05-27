@@ -546,18 +546,139 @@
                             <label for="lab">{{ __('Lab') }}</label>
                             <select name="lab" id="lab" class="form-control">
                                 <option value="">{{ __('Select One') }}</option>
-                                @foreach (['IGI','GIA','HRD','AGS','Other'] as $l)
+                                @foreach (['IGI','GIA','HRD','SGL','AGS','Other'] as $l)
                                     <option value="{{ $l }}" {{ old('lab', $da->lab ?? '') === $l ? 'selected' : '' }}>{{ $l }}</option>
                                 @endforeach
                             </select>
                         </div>
+                        <div class="form-group">
 
+                            <label for="diamond_type">
+
+                                {{ __('Diamond Type') }}
+
+                            </label>
+
+                            <select name="diamond_type"
+                                    id="diamond_type"
+                                    class="form-control">
+
+                                <option value="">
+                                    {{ __('Select One') }}
+                                </option>
+
+                                <option value="natural"
+                                        {{ old('diamond_type', $da->diamond_type ?? '') == 'natural' ? 'selected' : '' }}>
+
+                                    Natural
+
+                                </option>
+
+                                <option value="cvd"
+                                        {{ old('diamond_type', $da->diamond_type ?? '') == 'cvd' ? 'selected' : '' }}>
+
+                                    CVD
+
+                                </option>
+
+                                <option value="hpht"
+                                        {{ old('diamond_type', $da->diamond_type ?? '') == 'hpht' ? 'selected' : '' }}>
+
+                                    HPHT
+
+                                </option>
+
+                            </select>
+
+                        </div>
                         <div class="form-group">
                             <label for="certificate_number">{{ __('Certificate Number') }}</label>
                             <input type="text" name="certificate_number" id="certificate_number" class="form-control"
                                 value="{{ old('certificate_number', $da->certificate_number ?? '') }}" placeholder="{{ __('e.g. IGI-123456789') }}">
                         </div>
+                        {{-- ADD THIS AFTER "Certificate Number" FIELD INSIDE diamond_details_box --}}
+                        {{-- EXISTING CERTIFICATE PDF --}}
 
+                        @if(!empty($item->diamondAttribute->certificate_report_pdf))
+
+                            <div class="mb-3">
+
+                                <a href="{{ asset('storage/' . $item->diamondAttribute->certificate_report_pdf) }}"
+                                   target="_blank"
+                                   class="btn btn-primary btn-sm">
+
+                                    {{ __('View Existing Certificate PDF') }}
+
+                                </a>
+
+                            </div>
+
+                        @endif
+
+
+                        {{-- PDF REUPLOAD --}}
+
+                        <div class="form-group">
+
+                            <label for="certificate_report_pdf">
+
+                                {{ __('Certificate PDF') }}
+
+                            </label>
+
+                            <input type="file"
+                                   name="certificate_report_pdf"
+                                   id="certificate_report_pdf"
+                                   class="form-control"
+                                   accept=".pdf">
+
+                            <small class="text-muted">
+
+                                {{ __('Upload new PDF to replace existing one') }}
+
+                            </small>
+
+                        </div>
+
+
+                        {{-- EXISTING CERTIFICATE IMAGE --}}
+
+                        @if(!empty($item->diamondAttribute->certificate_report_image))
+
+                            <div class="mb-3">
+
+                                <img src="{{ asset('storage/' . $item->diamondAttribute->certificate_report_image) }}"
+                                     class="img-fluid rounded border"
+                                     style="max-height:220px;">
+
+                            </div>
+
+                        @endif
+
+
+                        {{-- IMAGE REUPLOAD --}}
+
+                        <div class="form-group">
+
+                            <label for="certificate_report_image">
+
+                                {{ __('Certificate Image') }}
+
+                            </label>
+
+                            <input type="file"
+                                   name="certificate_report_image"
+                                   id="certificate_report_image"
+                                   class="form-control"
+                                   accept="image/*">
+
+                            <small class="text-muted">
+
+                                {{ __('Upload new image to replace existing one') }}
+
+                            </small>
+
+                        </div>
                         <div class="form-group">
                             <label for="video_360_url">{{ __('Video 360 URL') }}</label>
                             <input type="text" name="video_360_url" id="video_360_url" class="form-control"
