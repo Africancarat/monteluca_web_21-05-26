@@ -37,14 +37,19 @@ final class CertificationHelper
         if (str_contains($l, 'ags') || str_contains($l, 'agl')) {
             return 'https://www.agslabs.com/report-information.html?report_no=' . rawurlencode($cert);
         }
-
+        if (str_contains($l, 'sgl')) {
+            return 'https://www.solitairegemlabs.com/verify-your-report/?reportno=' . rawurlencode($cert);
+        }
         return null;
     }
 
     /** @return non-falsy-string */
     public static function storageImageUrl(?string $path): string
     {
-        return ImageHelper::storageImageUrl($path, '');
-    }
+        if (empty($path)) {
+            return '';
+        }
 
+        return asset('storage/' . ltrim($path, '/'));
+    }
 }

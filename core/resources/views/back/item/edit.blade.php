@@ -546,12 +546,51 @@
                             <label for="lab">{{ __('Lab') }}</label>
                             <select name="lab" id="lab" class="form-control">
                                 <option value="">{{ __('Select One') }}</option>
-                                @foreach (['IGI','GIA','HRD','AGS','Other'] as $l)
+                                @foreach (['IGI','GIA','HRD','SGL','AGS','Other'] as $l)
                                     <option value="{{ $l }}" {{ old('lab', $da->lab ?? '') === $l ? 'selected' : '' }}>{{ $l }}</option>
                                 @endforeach
                             </select>
                         </div>
+                        <div class="form-group">
 
+                            <label for="diamond_type">
+
+                                {{ __('Diamond Type') }}
+
+                            </label>
+
+                            <select name="diamond_type"
+                                    id="diamond_type"
+                                    class="form-control">
+
+                                <option value="">
+                                    {{ __('Select One') }}
+                                </option>
+
+                                <option value="natural"
+                                        {{ old('diamond_type', $da->diamond_type ?? '') == 'natural' ? 'selected' : '' }}>
+
+                                    Natural
+
+                                </option>
+
+                                <option value="cvd"
+                                        {{ old('diamond_type', $da->diamond_type ?? '') == 'cvd' ? 'selected' : '' }}>
+
+                                    CVD
+
+                                </option>
+
+                                <option value="hpht"
+                                        {{ old('diamond_type', $da->diamond_type ?? '') == 'hpht' ? 'selected' : '' }}>
+
+                                    HPHT
+
+                                </option>
+
+                            </select>
+
+                        </div>
                         <div class="form-group">
                             <label for="certificate_number">{{ __('Certificate Number') }}</label>
                             <input type="text" name="certificate_number" id="certificate_number" class="form-control"

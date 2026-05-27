@@ -424,7 +424,7 @@
                             <label for="lab">{{ __('Lab') }}</label>
                             <select name="lab" id="lab" class="form-control">
                                 <option value="">{{ __('Select One') }}</option>
-                                @foreach (['IGI','GIA','HRD','AGS','Other'] as $l)
+                                @foreach (['IGI','GIA','HRD','SGL','AGS','Other'] as $l)
                                     <option value="{{ $l }}" {{ old('lab') === $l ? 'selected' : '' }}>{{ $l }}</option>
                                 @endforeach
                             </select>
