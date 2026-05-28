@@ -1,5 +1,9 @@
 @extends('master.back')
 
+@php
+    use App\Helpers\GstHelper;
+@endphp
+
 @section('content')
 
     <!-- Start of Main Content -->
@@ -158,11 +162,12 @@
                                                 $option_price = 0;
                                                 $total = 0;
                                             @endphp
+                                            @php
+                                                $invoiceCartSubtotal = 0;
+                                            @endphp
                                             @foreach (json_decode($order->cart, true) as $item)
                                                 @php
-                                                    $total += $item['main_price'] * $item['qty'];
-                                                    $option_price += $item['attribute_price'];
-                                                    $grandSubtotal = $total + $option_price;
+                                                    $invoiceCartSubtotal += ($item['main_price'] + $item['attribute_price']) * $item['qty'];
                                                 @endphp
                                                 <tr>
                                                     <td class="px-0">
@@ -219,11 +224,43 @@
                                                     </td>
                                                 </tr>
                                             @endforeach
+                                            @php
+                                                $invoiceGst = GstHelper::splitForSubtotal((float) $invoiceCartSubtotal);
+                                            @endphp
                                             <tr>
                                                 <td class="padding-top-2x" colspan="5">
                                                 </td>
                                             </tr>
-                                            @if ($order->tax != 0)
+                                            @if (($invoiceGst['total_tax'] ?? 0) > 0)
+                                                <tr>
+                                                    <td class="px-0 border-top border-top-2">
+                                                        <span class="text-muted">{{ __('CGST') }} ({{ $invoiceGst['cgst_percent'] }}%)</span>
+                                                    </td>
+                                                    <td class="px-0 text-right border-top border-top-2" colspan="5">
+                                                        <span>
+                                                            @if ($setting->currency_direction == 1)
+                                                                {{ $order->currency_sign }}{{ round($invoiceGst['cgst_amount'] * $order->currency_value, 2) }}
+                                                            @else
+                                                                {{ round($invoiceGst['cgst_amount'] * $order->currency_value, 2) }}{{ $order->currency_sign }}
+                                                            @endif
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="px-0 border-top border-top-2">
+                                                        <span class="text-muted">{{ __('SGST') }} ({{ $invoiceGst['sgst_percent'] }}%)</span>
+                                                    </td>
+                                                    <td class="px-0 text-right border-top border-top-2" colspan="5">
+                                                        <span>
+                                                            @if ($setting->currency_direction == 1)
+                                                                {{ $order->currency_sign }}{{ round($invoiceGst['sgst_amount'] * $order->currency_value, 2) }}
+                                                            @else
+                                                                {{ round($invoiceGst['sgst_amount'] * $order->currency_value, 2) }}{{ $order->currency_sign }}
+                                                            @endif
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            @elseif ($order->tax != 0)
                                                 <tr>
                                                     <td class="px-0 border-top border-top-2">
                                                         <span class="text-muted">{{ __('Tax') }}</span>

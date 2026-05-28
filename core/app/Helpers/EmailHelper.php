@@ -12,6 +12,8 @@ use App\Models\Order;
 
 use App\Models\Setting;
 
+use App\Helpers\GstHelper;
+
 use App\Support\MailConfigurator;
 
 use Illuminate\Support\Facades\Auth;
@@ -383,6 +385,24 @@ class EmailHelper
 
         $tax = (float) ($order->tax ?? 0);
 
+        $gst = GstHelper::splitForSubtotal($subtotal);
+
+        $cgstAmount = (float) ($gst['cgst_amount'] ?? 0);
+
+        $sgstAmount = (float) ($gst['sgst_amount'] ?? 0);
+
+        $totalGst = (float) ($gst['total_tax'] ?? 0);
+
+        if ($totalGst <= 0 && $tax > 0) {
+
+            $cgstAmount = round($tax / 2, 2);
+
+            $sgstAmount = round($tax / 2, 2);
+
+            $totalGst = $tax;
+
+        }
+
         return [
 
             '{product_list}' => $this->productListHtml($order, $cart),
@@ -397,7 +417,15 @@ class EmailHelper
 
             '{discount}' => $this->formatBaseMoney($order, $discountAmount),
 
-            '{tax}' => $this->formatBaseMoney($order, $tax),
+            '{tax}' => $this->formatBaseMoney($order, $totalGst > 0 ? $totalGst : $tax),
+
+            '{cgst}' => $this->formatBaseMoney($order, $cgstAmount),
+
+            '{sgst}' => $this->formatBaseMoney($order, $sgstAmount),
+
+            '{cgst_percent}' => (string) ($gst['cgst_percent'] ?? 0),
+
+            '{sgst_percent}' => (string) ($gst['sgst_percent'] ?? 0),
 
             '{shipping_cost}' => $this->formatBaseMoney($order, $shippingCost),
 

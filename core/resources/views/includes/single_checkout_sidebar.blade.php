@@ -21,10 +21,14 @@
                 <td class="text-gray-dark">{{ PriceHelper::setCurrencyPrice($cart_total) }}</td>
             </tr>
 
-            @if ($tax != 0)
-                <tr>
-                    <td>{{ __('Estimated tax') }}:</td>
-                    <td class="text-gray-dark">{{ PriceHelper::setCurrencyPrice($tax) }}</td>
+            @if (!empty($gst) && ($gst['total_tax'] ?? 0) != 0)
+                <tr class="cgst-row">
+                    <td>{{ __('CGST') }} ({{ $gst['cgst_percent'] ?? 0 }}%):</td>
+                    <td class="text-gray-dark cgst-amount">{{ PriceHelper::setCurrencyPrice($gst['cgst_amount'] ?? 0) }}</td>
+                </tr>
+                <tr class="sgst-row">
+                    <td>{{ __('SGST') }} ({{ $gst['sgst_percent'] ?? 0 }}%):</td>
+                    <td class="text-gray-dark sgst-amount">{{ PriceHelper::setCurrencyPrice($gst['sgst_amount'] ?? 0) }}</td>
                 </tr>
             @endif
 
@@ -61,13 +65,11 @@
                 </tr>
             @endif
 
-            @if ($shipping)
-                <tr class="d-none set__shipping_price_tr">
-                    <td>{{ __('Shipping') }}:</td>
-                    <td class="text-gray-dark set__shipping_price">
-                        {{ PriceHelper::setCurrencyPrice($shipping ? $shipping->price : 0) }}</td>
-                </tr>
-            @endif
+            <tr class="set__shipping_price_tr">
+                <td>{{ __('Shipping') }}:</td>
+                <td class="text-gray-dark set__shipping_price">
+                    {{ PriceHelper::setCurrencyPrice($shipping ? $shipping->price : 0) }}</td>
+            </tr>
             <tr>
                 <td class="text-lg text-primary">{{ __('Order total') }}</td>
                 <td class="text-lg text-primary grand_total_set" data-cart-subtotal="{{ $cart_total + ($tax ?? 0) }}">
