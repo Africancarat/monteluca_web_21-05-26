@@ -5,27 +5,61 @@
 @endsection
 
 
-@section('meta')
-    <meta name="tile" content="{{ $item->title }}">
-    <meta name="keywords" content="{{ $item->meta_keywords }}">
-    <meta name="description" content="{{ $item->meta_description }}">
+{{--@section('meta')--}}
+{{--    <meta name="tile" content="{{ $item->title }}">--}}
+{{--    <meta name="keywords" content="{{ $item->meta_keywords }}">--}}
+{{--    <meta name="description" content="{{ $item->meta_description }}">--}}
 
-    <meta name="twitter:title" content="{{ $item->title }}">
-    <meta name="twitter:image" content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
-    <meta name="twitter:description" content="{{ $item->meta_description }}">
+{{--    <meta name="twitter:title" content="{{ $item->title }}">--}}
+{{--    <meta name="twitter:image" content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">--}}
+{{--    <meta name="twitter:description" content="{{ $item->meta_description }}">--}}
 
 {{--    <meta name="og:title" content="{{ $item->title }}">--}}
 {{--    <meta name="og:image" content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">--}}
 {{--    <meta name="og:description" content="{{ $item->meta_description }}">--}}
+{{--     Open Graph--}}
+{{--    <meta property="og:title"--}}
+{{--          content="{{ Str::limit($item->title ?? $item->name,60) }}">--}}
+
+{{--    <meta property="og:description"--}}
+{{--          content="{{ Str::limit(strip_tags($item->meta_description ?? $item->details),150) }}">--}}
+
+{{--    <meta property="og:image"--}}
+{{--          content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">--}}
+
+{{--    <meta property="og:image:secure_url"--}}
+{{--          content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">--}}
+
+{{--    <meta property="og:image:width"--}}
+{{--          content="1200">--}}
+
+{{--    <meta property="og:image:height"--}}
+{{--          content="630">--}}
+
+{{--    <meta property="og:url"--}}
+{{--          content="{{ request()->url() }}">--}}
+
+{{--    <meta property="og:type"--}}
+{{--          content="product">--}}
+{{--@endsection--}}
+@section('meta')
+
+    <meta name="title" content="{{ $item->title ?? $item->name }}">
+    <meta name="keywords" content="{{ $item->meta_keywords }}">
+    <meta name="description" content="{{ $item->meta_description }}">
+
     {{-- Open Graph --}}
     <meta property="og:title"
-          content="{{ Str::limit($item->title ?? $item->name,60) }}">
-
-    <meta property="og:description"
-          content="{{ Str::limit(strip_tags($item->meta_description ?? $item->details),150) }}">
+          content="Monte Luca - {{ $item->name }}">
 
     <meta property="og:image"
           content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
+
+    <meta property="og:description"
+          content="{{ Str::limit(strip_tags($item->sort_details ?? $item->details), 200) }}">
+
+    <meta property="og:type"
+          content="product">
 
     <meta property="og:image:secure_url"
           content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
@@ -36,13 +70,25 @@
     <meta property="og:image:height"
           content="630">
 
-    <meta property="og:url"
-          content="{{ request()->url() }}">
+    <meta property="og:image:alt"
+          content="{{ $item->name }}">
 
-    <meta property="og:type"
-          content="product">
+    <meta property="og:site_name"
+          content="Monte Luca">
+
+    {{-- Twitter --}}
+    <meta name="twitter:card" content="summary_large_image">
+
+    <meta name="twitter:title"
+          content="Monte Luca - {{ $item->title ?? $item->name }}">
+
+    <meta name="twitter:description"
+          content="{{ Str::limit(strip_tags($item->meta_description ?? $item->details), 200) }}">
+
+    <meta name="twitter:image"
+          content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
+
 @endsection
-
 
 
 @section('content')
@@ -164,7 +210,8 @@
                                 <del id="pdp_compare_price">{{ $item->previous_price != 0 ? PriceHelper::setPreviousPrice($item->previous_price) : '' }}</del>
                             </small>
                             <span id="main_price" class="main-price product-price">{{ PriceHelper::grandCurrencyPrice($item) }}</span>
-                            <small id="pdp_price_loading_msg" class="pdp-price-loading-msg d-none" aria-live="polite">{{ __('Updating price...') }}</small>
+                            {{-- Keep this element in flow to prevent layout shift while updating price --}}
+                            <small id="pdp_price_loading_msg" class="pdp-price-loading-msg" style="visibility:hidden" aria-live="polite">{{ __('Updating price...') }}</small>
                         </span>
 
                         @if ($item->diamondAttribute)

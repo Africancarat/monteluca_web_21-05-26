@@ -497,12 +497,14 @@
     function setLoading(on) {
       window.__pdpDynamicPriceState.loading = on;
       $('#pdp_price_area').toggleClass('is-pdp-price-loading', on).toggleClass('is-pdp-price-error', false);
-      $('#pdp_price_loading_msg').toggleClass('d-none', !on);
+      // Avoid layout shift: keep the element in flow and toggle only visibility.
+      $('#pdp_price_loading_msg').css('visibility', on ? 'visible' : 'hidden');
     }
 
     function setPriceError(message) {
       $('#pdp_price_area').addClass('is-pdp-price-error').removeClass('is-pdp-price-loading');
-      $('#pdp_price_loading_msg').addClass('d-none');
+      // Keep reserved space; hide the message.
+      $('#pdp_price_loading_msg').css('visibility', 'hidden');
       console.warn('[PDP Price]', message);
     }
 
