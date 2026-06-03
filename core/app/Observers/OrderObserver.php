@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Order;
+use App\Services\OrderStatusMailService;
 use App\Services\Referral\ReferralRewardService;
 
 class OrderObserver
@@ -29,6 +30,10 @@ class OrderObserver
 
         if ($order->wasChanged('order_status') && $order->order_status === 'Canceled') {
             $service->cancelForOrder($order);
+        }
+
+        if ($order->wasChanged('order_status')) {
+            app(OrderStatusMailService::class)->send($order->fresh(), (string) $order->order_status);
         }
     }
 

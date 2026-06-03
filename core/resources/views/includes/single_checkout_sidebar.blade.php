@@ -206,9 +206,13 @@
                         <div class="custom-control d-flex custom-checkbox">
                             <input class="custom-control-input me-2" type="checkbox" id="trams__condition_single"
                                 value="">
+{{--                            <label class="custom-control-label flex-1" for="trams__condition">--}}
+{{--                                {{ __('This site is protected by reCAPTCHA and the') }} <a href="{{ $setting->policy_link }}" target="_blank">{{ __('Privacy Policy') }}</a> {{ __('and') }} <a--}}
+{{--                                    href="{{ $setting->terms_link }}" target="_blank">{{ __('Terms of Service') }}</a>--}}
+{{--                                {{ __('apply.') }}</label>--}}
                             <label class="custom-control-label flex-1" for="trams__condition">
-                                {{ __('This site is protected by reCAPTCHA and the') }} <a href="{{ $setting->policy_link }}" target="_blank">{{ __('Privacy Policy') }}</a> {{ __('and') }} <a
-                                    href="{{ $setting->terms_link }}" target="_blank">{{ __('Terms of Service') }}</a>
+                                {{ __('This site is protected by reCAPTCHA and the') }} <a href="/privacy-policy" target="_blank">{{ __('Privacy Policy') }}</a> {{ __('and') }} <a
+                                        href="/terms-and-service" target="_blank">{{ __('Terms of Service') }}</a>
                                 {{ __('apply.') }}</label>
                         </div>
                     </div>

@@ -1,12 +1,42 @@
+function syncLuxuryMegaMenuLayout() {
+  const navRow = document.querySelector('.site-header .navbar');
+  if (!navRow) {
+    return;
+  }
+
+  const bottom = navRow.getBoundingClientRect().bottom;
+  document.documentElement.style.setProperty('--luxury-mega-top', `${bottom}px`);
+
+  const navContainer = document.querySelector('.site-header .navbar > .container');
+  const navAnchor =
+    document.querySelector('.site-header .navbar .left-category-area') ||
+    document.querySelector('.site-header .navbar .nav-inner') ||
+    navContainer;
+
+  if (navAnchor) {
+    // Align with nav row; extra offset pulls columns slightly left of default container padding.
+    const insetLeft = Math.max(8, navAnchor.getBoundingClientRect().left - 32);
+    document.documentElement.style.setProperty('--luxury-mega-inset-left', `${insetLeft}px`);
+  } else if (navContainer) {
+    const insetLeft = Math.max(8, navContainer.getBoundingClientRect().left - 32);
+    document.documentElement.style.setProperty('--luxury-mega-inset-left', `${insetLeft}px`);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const nav = document.querySelector('.navbar');
   if (nav) {
-    const onScroll = () =>
+    const onScroll = () => {
       nav.classList.toggle('scrolled', window.scrollY > 60);
+      syncLuxuryMegaMenuLayout();
+    };
 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
   }
+
+  syncLuxuryMegaMenuLayout();
+  window.addEventListener('resize', syncLuxuryMegaMenuLayout, { passive: true });
 });
 
 function openFilterSheet() {

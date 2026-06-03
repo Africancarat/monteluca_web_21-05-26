@@ -1943,7 +1943,15 @@ h2,
 
 /* Full-width luxury mega panels (Engagement / Diamonds / Rings / Necklaces) */
 @media (min-width: 992px) {
+  .site-header {
+    overflow: visible !important;
+  }
+
   .site-header .navbar > .container {
+    overflow: visible !important;
+  }
+
+  .site-header .navbar > .container > .row {
     overflow: visible !important;
   }
 
@@ -1957,11 +1965,14 @@ h2,
 
   .luxury-nav__item--has-mega .luxury-mega-panel {
     display: none;
-    position: absolute;
+    position: fixed;
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
-    top: 100%;
+    max-width: none !important;
+    margin: 0 !important;
+    transform: none !important;
+    top: var(--luxury-mega-top, 120px);
     z-index: 1080;
     background: #fff;
     border-top: 1px solid rgba(10, 10, 10, 0.08);
@@ -1983,10 +1994,52 @@ h2,
 
   .luxury-mega-panel__inner {
     max-width: 1320px;
+    width: 100%;
+    margin-left: var(--luxury-mega-inset-left, 0.75rem) !important;
+    margin-right: auto !important;
+    padding-left: 0 !important;
+    padding-right: 1.25rem !important;
+  }
+
+  /* Bootstrap .container centers content — never use it inside the mega panel */
+  .luxury-mega-panel .luxury-mega-panel__inner.container,
+  .luxury-mega-panel .luxury-mega-panel__inner.container-fluid {
+    padding-left: 0 !important;
   }
 
   .luxury-mega-row {
     margin: 0;
+    align-items: stretch;
+  }
+
+  .luxury-mega-col--media {
+    padding-top: 0;
+    padding-bottom: 0;
+    border-left: 1px solid rgba(10, 10, 10, 0.08);
+  }
+
+  .luxury-mega-feature {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: min(420px, 72vh);
+    overflow: hidden;
+    text-decoration: none !important;
+  }
+
+  .luxury-mega-feature__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: min(420px, 72vh);
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.35s ease;
+  }
+
+  .luxury-mega-feature:hover .luxury-mega-feature__img,
+  .luxury-mega-feature:focus-visible .luxury-mega-feature__img {
+    transform: scale(1.03);
   }
 
   .luxury-mega-col {
@@ -3031,37 +3084,51 @@ h2,
   }
 }
 
-/* Navbar "Categories" trigger: no extra fill — sits on solid white menu row */
+/* Navbar "Categories" trigger — match luxury nav links (Wedding Rings, etc.) */
 .site-header .navbar .left-category-area {
   flex: 0 0 auto;
-  max-width: min(176px, 100%);
+  max-width: none;
   background: transparent !important;
   border-radius: 0;
+  display: flex;
+  align-items: center;
+}
+
+.site-header .navbar .left-category-area .category-header {
+  margin: 0;
+  padding: 0;
 }
 
 .site-header .navbar .left-category-area .category-header h4 {
   background: transparent !important;
-  border: 1px solid rgba(10, 10, 10, 0.22) !important;
+  border: none !important;
+  box-shadow: none !important;
   color: var(--luxury-black) !important;
   font-family: var(--luxury-sans);
-  font-size: 11px !important;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  line-height: 1.35;
+  font-size: clamp(0.6875rem, 0.6rem + 0.55vw, 0.9375rem) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.07em !important;
+  line-height: 1.22 !important;
   margin-bottom: 0 !important;
-  padding: 7px 10px !important;
-  text-transform: uppercase;
+  padding-block: clamp(0.375rem, 0.3rem + 0.35vw, 0.6rem) !important;
+  padding-inline: clamp(0.35rem, 0.3rem + 0.55vw, 0.85rem) !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  cursor: pointer;
 }
 
-.site-header .navbar .left-category-area .category-header h4 i {
-  color: var(--luxury-black) !important;
-  font-size: 13px !important;
-  margin-right: 6px !important;
-  top: 0 !important;
+.site-header .navbar .left-category-area .category-header h4 .icon-chevron-down {
+  color: inherit !important;
+  font-size: 0.82em !important;
+  margin-left: 3px !important;
+  margin-right: 0 !important;
+  position: static !important;
+  top: auto !important;
+  vertical-align: middle;
 }
 
 .site-header .navbar .left-category-area .category-header:hover h4,
-.site-header .navbar .left-category-area .category-header:hover h4 i {
+.site-header .navbar .left-category-area .category-header:hover h4 .icon-chevron-down {
   color: var(--luxury-gray) !important;
 }
 

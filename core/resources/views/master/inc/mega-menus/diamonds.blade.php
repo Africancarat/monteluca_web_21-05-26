@@ -1,6 +1,6 @@
 {{-- Diamonds mega: loose search + design paths + jewelry + icons --}}
 <div class="row luxury-mega-row g-0">
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Design your own engagement ring') }}</p>
         <a href="{{ route('diamonds.index') }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'diamond'])<span>{{ __('Start with a diamond') }}</span></a>
         <a href="{{ route('diamonds.index', ['lab_grown' => 1]) }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'diamond-lab'])<span>{{ __('Start with a lab-grown diamond') }}</span></a>
@@ -14,7 +14,7 @@
         <a href="{{ route('diamonds.index') }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'star-premier'])<span>{{ __('True hearts & ideal cuts') }}</span></a>
         <a href="{{ route('diamonds.index') }}" class="luxury-mega-link luxury-mega-link--footer luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'diamond'])<span>{{ __('Shop all diamonds') }}</span></a>
     </div>
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Loose diamonds') }}</p>
         <div class="luxury-mega-grid luxury-mega-grid--shapes">
             @foreach (['Round', 'Princess', 'Cushion', 'Emerald', 'Pear', 'Oval', 'Radiant', 'Asscher', 'Marquise', 'Heart'] as $shape)
@@ -38,7 +38,7 @@
             @endforeach
         </div>
     </div>
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Design your own jewelry') }}</p>
         <a href="{{ route('front.catalog') }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'earrings'])<span>{{ __('Earrings') }}</span></a>
         <a href="{{ route('diamonds.compare.index') }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'hearts-pair'])<span>{{ __('Natural diamond pairs') }}</span></a>
@@ -52,4 +52,9 @@
         <a href="{{ route('front.catalog') }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'necklace-arc'])<span>{{ __('All diamond jewelry') }}</span></a>
         <a href="{{ route('diamonds.index', ['lab_grown' => 1]) }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'diamond-lab'])<span>{{ __('All lab-grown diamond jewelry') }}</span></a>
     </div>
+    @include('master.inc.mega-menus.partials.feature-image', [
+        'src' => url('/core/public/storage/images/crowning-gemstone-jewelry.jpg'),
+        'href' => route('diamonds.index'),
+        'alt' => __('Diamonds'),
+    ])
 </div>

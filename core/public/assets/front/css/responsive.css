@@ -436,3 +436,14 @@
   line-height: 1;
   transform: none !important;
 }
+
+.form-control:focus {
+    color: black !important;
+    background-color: white !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+.input-group .form-control {
+    color: black !important;
+    background-color: white !important;
+}
