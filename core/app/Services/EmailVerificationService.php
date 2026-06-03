@@ -37,7 +37,7 @@ class EmailVerificationService
 
         $emailData = [
             'to' => $user->email,
-            'subject' => __('Verify your email address'),
+            'subject' => __('Welcome to Monte Luca – Confirm Your Account'),
             'body' => view('emails.verify-email', [
                 'user' => $user,
                 'url' => $url,

@@ -1,6 +1,6 @@
 {{-- Earrings mega + subcategories (luxury modal) --}}
 <div class="row luxury-mega-row g-0">
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Shop by earing') }}</p>
 
         {{-- Top subcategories (match screenshot) --}}
@@ -27,7 +27,7 @@
         </a>
     </div>
 
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Shop by metal') }}</p>
         @foreach ([
             ['label' => __('White gold'), 'q' => 'white gold earrings'],
@@ -42,7 +42,7 @@
         @endforeach
     </div>
 
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Diamond classics') }}</p>
         <a href="{{ url('/catalog?' . http_build_query(['search' => 'diamond studs'])) }}"
             class="luxury-mega-link luxury-mega-link--with-icon">
@@ -66,5 +66,10 @@
             <span>{{ __('View all jewelry') }} &rsaquo;</span>
         </a>
     </div>
+    @include('master.inc.mega-menus.partials.feature-image', [
+        'src' => url('/core/public/storage/images/crowning-diamond-studs.jpg'),
+        'href' => url('/catalog?' . http_build_query(['category' => 'Earrings'])),
+        'alt' => __('Earrings'),
+    ])
 </div>
 

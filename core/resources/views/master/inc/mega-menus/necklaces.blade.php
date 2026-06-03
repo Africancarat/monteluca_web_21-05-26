@@ -1,6 +1,6 @@
 {{-- Necklaces mega + icons --}}
 <div class="row luxury-mega-row g-0">
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Shop all necklaces') }}</p>
         {{-- Top subcategories (match screenshot) --}}
         @foreach ([
@@ -36,7 +36,7 @@
         <div class="luxury-mega-divider"></div>
         <a href="{{ route('front.catalog', ['search' => 'necklace']) }}" class="luxury-mega-link luxury-mega-link--footer luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'star-premier'])<span>{{ __('Best-selling necklaces') }}</span></a>
     </div>
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Shop by metal') }}</p>
         @foreach ([['label' => __('White gold necklaces'), 'q' => 'white gold necklace'], ['label' => __('Yellow gold necklaces'), 'q' => 'yellow gold necklace'], ['label' => __('Rose gold necklaces'), 'q' => 'rose gold necklace'], ['label' => __('Platinum necklaces'), 'q' => 'platinum necklace']] as $m)
             <a href="{{ route('front.catalog', ['search' => $m['q']]) }}" class="luxury-mega-link luxury-mega-link--swatch">
@@ -49,7 +49,7 @@
         <a href="{{ route('diamonds.index') }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'diamond'])<span>{{ __('Natural diamond') }}</span></a>
         <a href="{{ route('diamonds.index', ['lab_grown' => 1]) }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'diamond-lab'])<span>{{ __('Lab-grown diamond') }}</span></a>
     </div>
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Diamond classics') }}</p>
         <a href="{{ route('front.catalog', ['search' => 'tennis necklace']) }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'tennis'])<span>{{ __('Tennis necklaces') }}</span></a>
         <a href="{{ route('front.catalog', ['search' => 'diamond pendant']) }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'pendant'])<span>{{ __('Diamond pendants') }}</span></a>
@@ -60,4 +60,9 @@
         <div class="luxury-mega-divider"></div>
         <a href="{{ route('front.catalog') }}" class="luxury-mega-link luxury-mega-link--footer luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'necklace-arc'])<span>{{ __('View all jewelry') }} &rsaquo;</span></a>
     </div>
+    @include('master.inc.mega-menus.partials.feature-image', [
+        'src' => url('/core/public/storage/images/crowning-gemstone-jewelry.jpg'),
+        'href' => route('front.catalog', ['search' => 'necklace']),
+        'alt' => __('Necklaces'),
+    ])
 </div>

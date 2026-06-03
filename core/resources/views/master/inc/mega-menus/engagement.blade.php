@@ -1,6 +1,6 @@
 {{-- James Allen–style engagement mega (column layout + deep links + icons). --}}
 <div class="row luxury-mega-row g-0">
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Shop by style') }}</p>
         @foreach ([
             ['icon' => 'ring-women', 'label' => __('All rings'), 'href' => url('/catalog?category=Engagement-Rings')],
@@ -31,7 +31,7 @@
         <a href="{{ route('front.catalog') }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'star-premier'])<span>{{ __('Top engagement rings') }}</span></a>
         <a href="{{ url('/engagement-rings') }}" class="luxury-mega-link luxury-mega-link--footer luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'ring-setting'])<span>{{ __('Shop all engagement') }}</span></a>
     </div>
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Customize your engagement ring') }}</p>
         <a href="{{ route('education.guides.show', ['slug' => 'ring-settings']) }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'sparkle'])<span>{{ __('The ring studio') }}</span></a>
         <p class="luxury-mega-subkicker mt-3">{{ __('Engagement ring styles') }}</p>
@@ -53,7 +53,7 @@
             @endforeach
         </div>
     </div>
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Shop by metal') }}</p>
         @foreach ([['label' => __('Rose gold'), 'q' => 'rose gold'], ['label' => __('White gold'), 'q' => 'white gold'], ['label' => __('Yellow gold'), 'q' => 'yellow gold'], ['label' => __('Platinum'), 'q' => 'platinum']] as $m)
             <a href="{{ route('front.catalog', ['search' => $m['q']]) }}" class="luxury-mega-link luxury-mega-link--swatch">
@@ -66,4 +66,9 @@
         <p class="luxury-mega-subkicker mt-3">{{ __('Education') }}</p>
         <a href="{{ route('education.guides.show', ['slug' => 'engagement-ring-guide']) }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'book'])<span>{{ __('Engagement guide') }}</span></a>
     </div>
+    @include('master.inc.mega-menus.partials.feature-image', [
+        'src' => url('/core/public/storage/images/crowning-eternity-rings.jpg'),
+        'href' => url('/engagement-rings'),
+        'alt' => __('Engagement rings'),
+    ])
 </div>

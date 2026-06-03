@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Log;
 
 class OrderStatusMailService
 {
+    /**
+     * Order status (admin) => email_templates.type values (first match wins).
+     */
     protected array $templateTypes = [
         'In Progress' => ['Order In Progress'],
         'Shipped' => ['Order Shipped'],
@@ -23,6 +26,7 @@ class OrderStatusMailService
 
     public function send(Order $order, string $status): bool
     {
+        $status = $this->normalizeStatus($status);
         $templateType = $this->templateTypeForStatus($status);
 
         if (! $templateType) {
@@ -89,6 +93,7 @@ class OrderStatusMailService
                 'status' => $status,
                 'template' => $templateType,
                 'to' => $to,
+                'reason' => 'sendTemplateMail_returned_false',
             ]);
         } catch (\Throwable $e) {
             Log::error('Order status mail failed', [
@@ -103,19 +108,44 @@ class OrderStatusMailService
         return false;
     }
 
+    protected function normalizeStatus(string $status): string
+    {
+        $status = trim(urldecode($status));
+
+        return match (strtolower($status)) {
+            'canceled', 'cancelled' => 'Canceled',
+            'in progress' => 'In Progress',
+            'ready to ship' => 'Ready to Ship',
+            default => $status,
+        };
+    }
+
     protected function templateTypeForStatus(string $status): ?string
     {
-        foreach ($this->templateTypes[$status] ?? [] as $type) {
-            if (EmailTemplate::whereType($type)->exists()) {
-                return $type;
+        $candidates = $this->templateTypes[$status] ?? [];
+
+        foreach ($candidates as $type) {
+            $template = EmailTemplate::where('type', $type)->first();
+            if ($template) {
+                return $template->type;
             }
         }
 
-        if (array_key_exists($status, $this->templateTypes)) {
+        // Case-insensitive fallback (admin may have edited spacing/casing in DB).
+        foreach ($candidates as $type) {
+            $template = EmailTemplate::query()
+                ->whereRaw('LOWER(TRIM(type)) = ?', [strtolower(trim($type))])
+                ->first();
+            if ($template) {
+                return $template->type;
+            }
+        }
+
+        if ($candidates !== []) {
             Log::warning('Order status mail failed', [
                 'status' => $status,
                 'reason' => 'missing_template',
-                'expected_templates' => $this->templateTypes[$status],
+                'expected_templates' => $candidates,
             ]);
         }
 
@@ -126,14 +156,24 @@ class OrderStatusMailService
     {
         $billingInfo = json_decode($order->billing_info, true) ?: [];
 
-        return $billingInfo['bill_email'] ?? $order->user->email ?? null;
+        $email = $billingInfo['bill_email'] ?? null;
+
+        if ($email) {
+            return $email;
+        }
+
+        $order->loadMissing('user');
+
+        return $order->user->email ?? null;
     }
 
     protected function customerName(Order $order): string
     {
         $billingInfo = json_decode($order->billing_info, true) ?: [];
         $billingName = trim(($billingInfo['bill_first_name'] ?? '').' '.($billingInfo['bill_last_name'] ?? ''));
-        $userName = trim($order->user->displayName());
+
+        $order->loadMissing('user');
+        $userName = trim($order->user?->displayName() ?? '');
 
         return $billingName ?: ($userName ?: __('Customer'));
     }

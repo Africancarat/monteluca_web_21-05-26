@@ -1,6 +1,6 @@
 {{-- Wedding / fashion rings mega + icons --}}
 <div class="row luxury-mega-row g-0">
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Shop by style') }}</p>
         @foreach ([
             ['icon' => 'ring-women', 'label' => __('All rings'), 'href' => url('/catalog?category=Wedding-Rings')],
@@ -17,7 +17,7 @@
         <div class="luxury-mega-divider"></div>
         <a href="{{ url('/wedding-rings') }}" class="luxury-mega-link luxury-mega-link--footer luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'star-premier'])<span>{{ __('Best-selling wedding rings') }}</span></a>
     </div>
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Women') }}</p>
         @foreach ([['icon' => 'diamond', 'label' => __('Diamond wedding rings')], ['icon' => 'ring-women', 'label' => __('Classic wedding rings')], ['icon' => 'ring-women', 'label' => __('Curved wedding rings')], ['icon' => 'sparkle', 'label' => __("Fashion wedding rings")], ['icon' => 'ring-women', 'label' => __("Women's wedding rings")]] as $row)
             <a href="{{ route('front.catalog', ['search' => $row['label']]) }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => $row['icon']])<span>{{ $row['label'] }}</span></a>
@@ -27,7 +27,7 @@
             <a href="{{ route('front.catalog', ['search' => $row['label']]) }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => $row['icon']])<span>{{ $row['label'] }}</span></a>
         @endforeach
     </div>
-    <div class="col-lg-4 luxury-mega-col">
+    <div class="col-lg-3 luxury-mega-col">
         <p class="luxury-mega-kicker">{{ __('Shop by metal') }}</p>
         @foreach ([['label' => __('White gold'), 'q' => 'white gold ring'], ['label' => __('Yellow gold'), 'q' => 'yellow gold ring'], ['label' => __('Rose gold'), 'q' => 'rose gold ring'], ['label' => __('Platinum'), 'q' => 'platinum ring'], ['label' => __('Titanium'), 'q' => 'titanium ring']] as $m)
             <a href="{{ route('front.catalog', ['search' => $m['q']]) }}" class="luxury-mega-link luxury-mega-link--swatch">
@@ -43,4 +43,9 @@
         <a href="{{ route('education.guides.show', ['slug' => 'metal-types']) }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'ring-men'])<span>{{ __('Alternative metals') }}</span></a>
         <a href="{{ route('education.guides.show', ['slug' => 'ring-settings']) }}" class="luxury-mega-link luxury-mega-link--with-icon">@include('master.inc.mega-menus.partials.icon', ['name' => 'ring-setting'])<span>{{ __('Ring guide') }}</span></a>
     </div>
+    @include('master.inc.mega-menus.partials.feature-image', [
+        'src' => url('/core/public/storage/images/crowning-mens-wedding-rings.jpg'),
+        'href' => url('/wedding-rings'),
+        'alt' => __('Wedding rings'),
+    ])
 </div>

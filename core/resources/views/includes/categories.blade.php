@@ -6,7 +6,7 @@
 
     <div class="left-category-area">
         <div class="category-header">
-            <h4><i class="icon-align-justify"></i> {{ __('Categories') }}</h4>
+            <h4>{{ __('Categories') }}<i class="icon-chevron-down" aria-hidden="true"></i></h4>
         </div>
         <div class="category-list">
             @foreach ($categories as $key => $pcategory)
