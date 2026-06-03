@@ -415,7 +415,13 @@
                         $da = $item->diamondAttribute;
                         $hasDiamond = (bool) old('has_diamond', $da ? 1 : 0);
                     @endphp
-
+                    @php
+                        $gold = $item->goldAttribute;
+                        $hasGoldCertificate = (bool) old(
+                            'has_gold_certificate',
+                            $gold ? 1 : 0
+                        );
+                    @endphp
                     <hr>
                     <div class="form-group mb-2">
                         <label class="switch-primary">
@@ -425,9 +431,25 @@
                             <span class="switch-text">{{ __('Has Diamond') }}</span>
                         </label>
                     </div>
+                    <hr>
 
+                    <div class="form-group mb-2">
+                        <label class="switch-primary">
+                            <input type="checkbox"
+                                   class="switch switch-bootstrap radio-check"
+                                   name="has_gold_certificate"
+                                   value="1"
+                                   id="has_gold_certificate_toggle"
+                                    {{ old('has_gold_certificate') ? 'checked' : '' }}>
+
+                            <span class="switch-body"></span>
+                            <span class="switch-text">
+            {{ __('Has Gold ') }}
+        </span>
+                        </label>
+                    </div>
                     <div id="diamond_details_box" class="{{ $hasDiamond ? '' : 'd-none' }}">
-                        <h6 class="mb-2"><b>{{ __('Diamond Details') }}</b></h6>
+                         <h6 class="mb-2"><b>{{ __('Diamond Details') }}</b></h6>
                         @php
                             $colorOld = old('color_grade');
                             if (is_array($colorOld)) {
@@ -693,6 +715,75 @@
                             </div>
                         </div>
                     </div>
+                    <div id="gold_certificate_box"
+                         class="{{ $hasGoldCertificate ? '' : 'd-none' }}">
+
+                        <h6 class="mb-2">
+                            <b>{{ __('Gold Certificate Details') }}</b>
+                        </h6>
+
+                        <div class="form-group">
+
+                            <label>
+                                {{ __('Certificate Number') }}
+                            </label>
+
+                            <input type="text"
+                                   name="gold_certificate_number"
+                                   class="form-control"
+                                   value="{{ old('gold_certificate_number', $gold->certificate_number ?? '') }}">
+                        </div>
+                        @if(!empty($gold->certificate_pdf))
+
+                            <div class="mb-3">
+
+                                <a href="{{ asset('storage/'.$gold->certificate_pdf) }}"
+                                   target="_blank"
+                                   class="btn btn-primary btn-sm">
+
+                                    View Existing Gold Certificate PDF
+
+                                </a>
+
+                            </div>
+
+                        @endif
+                        <div class="form-group">
+
+                            <label>
+                                Gold Certificate PDF
+                            </label>
+
+                            <input type="file"
+                                   name="gold_certificate_pdf"
+                                   class="form-control"
+                                   accept=".pdf">
+
+                        </div>
+                        @if(!empty($gold->certificate_image))
+
+                            <div class="mb-3">
+
+                                <img src="{{ asset('storage/'.$gold->certificate_image) }}"
+                                     class="img-fluid rounded border"
+                                     style="max-height:220px;">
+
+                            </div>
+
+                        @endif
+                        <div class="form-group">
+
+                            <label>
+                                Gold Certificate Image
+                            </label>
+
+                            <input type="file"
+                                   name="gold_certificate_image"
+                                   class="form-control"
+                                   accept="image/*">
+                        </div>
+
+                    </div>
                 </div>
             </div>
             <div class="card">
@@ -748,6 +839,31 @@
                 box.classList.add('d-none');
             }
         });
+    })();
+    (function () {
+
+        var t =
+            document.getElementById(
+                'has_gold_certificate_toggle'
+            );
+
+        var box =
+            document.getElementById(
+                'gold_certificate_box'
+            );
+
+        if (!t || !box) return;
+
+        t.addEventListener('change', function () {
+
+            if (this.checked) {
+                box.classList.remove('d-none');
+            } else {
+                box.classList.add('d-none');
+            }
+
+        });
+
     })();
 </script>
 <script>

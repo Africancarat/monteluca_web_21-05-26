@@ -40,7 +40,7 @@ class ProfileUpdateRequest extends FormRequest
             ValidationRules::personName('first_name'),
             ValidationRules::personName('last_name'),
             ValidationRules::emailUnique('email', 'users', $userId, true),
-            ValidationRules::phone('phone'),
+            ValidationRules::phoneUnique('phone', 'users', $userId),
             ['password' => ValidationRules::strongPassword(false)],
             ['password_confirmation' => ['nullable', 'required_with:password', 'same:password']],
             ValidationRules::image('photo', false, 2048),
@@ -53,6 +53,7 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'phone.digits' => __('Phone number must contain exactly 10 digits.'),
+            'phone.unique' => __('This phone number already exists.'),
             'password.mixed' => __('Password must contain uppercase and lowercase letters.'),
             'password.numbers' => __('Password must contain at least one number.'),
             'password.symbols' => __('Password must contain at least one symbol.'),

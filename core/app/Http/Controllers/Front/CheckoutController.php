@@ -63,6 +63,22 @@ class CheckoutController extends Controller
         $this->__paypalConstruct();
     }
 
+    /**
+     * Guests may view checkout when enabled, but must log in before submitting.
+     */
+    protected function requireLoginForCheckoutSubmit()
+    {
+        if (Auth::check()) {
+            return null;
+        }
+
+        Session::put('url.intended', route('front.checkout'));
+
+        return redirect()
+            ->route('user.login')
+            ->with('error', __('Please log in to complete checkout.'));
+    }
+
     public function checkoutPage()
     {
 
@@ -191,6 +207,10 @@ class CheckoutController extends Controller
 
     public function billingStore(CheckoutBillingRequest $request)
     {
+        if ($redirect = $this->requireLoginForCheckoutSubmit()) {
+            return $redirect;
+        }
+
         $billing = $request->safe()->only(CheckoutBillingRequest::SESSION_KEYS);
 
         if ($request->boolean('same_ship_address')) {
@@ -289,6 +309,10 @@ class CheckoutController extends Controller
 
     public function shippingStore(CheckoutShippingRequest $request)
     {
+        if ($redirect = $this->requireLoginForCheckoutSubmit()) {
+            return $redirect;
+        }
+
         Session::put('shipping_address', $request->safe()->only(CheckoutShippingRequest::SESSION_KEYS));
 
         return redirect(route('front.checkout.payment'));
@@ -360,8 +384,9 @@ class CheckoutController extends Controller
 
     public function checkout(PaymentRequest $request)
     {
-
-
+        if ($redirect = $this->requireLoginForCheckoutSubmit()) {
+            return $redirect;
+        }
 
         PriceHelper::checkCheckout($request);
 

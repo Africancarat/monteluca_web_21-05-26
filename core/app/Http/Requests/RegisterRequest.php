@@ -30,7 +30,7 @@ class RegisterRequest extends FormRequest
             ValidationRules::personName('first_name'),
             ValidationRules::personName('last_name'),
             ValidationRules::emailUnique('email', 'users', null, true),
-            ValidationRules::phone('phone'),
+            ValidationRules::phoneUnique('phone', 'users'),
             ['password' => ValidationRules::strongPassword()],
             ['password_confirmation' => ['required', 'string', 'same:password']],
             ValidationRules::recaptcha((bool) ($setting->recaptcha ?? 0))
@@ -44,6 +44,8 @@ class RegisterRequest extends FormRequest
             'last_name.required' => __('Last Name field is required.'),
             'phone.required' => __('Phone Number is required.'),
             'phone.digits' => __('Phone number must contain exactly 10 digits.'),
+            'phone.unique' => __('This phone number already exists.'),
+
             'email.required' => __('Email field is required.'),
             'email.email' => __('Please enter a valid email address.'),
             'email.unique' => __('This email has already been taken.'),
@@ -52,7 +54,7 @@ class RegisterRequest extends FormRequest
             'password.mixed' => __('Password must contain uppercase and lowercase letters.'),
             'password.numbers' => __('Password must contain at least one number.'),
             'password.symbols' => __('Password must contain at least one symbol.'),
-            'password.uncompromised' => __('This password has appeared in a data breach. Please choose a different password.'),
+        
             'password_confirmation.same' => __('Password confirmation does not match.'),
             'g-recaptcha-response.required' => __('Please verify that you are not a robot.'),
             'honeypot.max' => __('Please verify that you are not a robot.'),

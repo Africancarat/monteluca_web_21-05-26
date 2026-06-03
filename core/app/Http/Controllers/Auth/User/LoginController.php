@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth\User;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AuthRequest;
+use App\Models\Setting;
 use App\Support\EmailVerification;
 use App\Support\Recaptcha;
 use Auth;
@@ -20,6 +21,16 @@ class LoginController extends Controller
 
     public function showForm()
     {
+        if (request()->query('redirect') === 'checkout') {
+            $setting = Setting::first();
+            Session::put(
+                'url.intended',
+                (int) ($setting->is_single_checkout ?? 0) === 1
+                    ? route('front.checkout')
+                    : route('front.checkout.billing')
+            );
+        }
+
         return view('user.auth.login');
     }
 

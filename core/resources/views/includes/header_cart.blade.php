@@ -44,7 +44,7 @@
         <div class="w-50 d-block"><a class="btn btn-luxury btn-sm mb-0"
                 href="{{ route('front.cart') }}"><span>{{ __('Cart') }}</span></a></div>
         <div class="w-50 d-block text-end"><a class="btn btn-luxury btn-sm mb-0"
-                href="{{ route('front.checkout.billing') }}"><span>{{ __('Checkout') }}</span></a></div>
+                href="{{ \App\Support\CheckoutEntry::url() }}"><span>{{ __('Checkout') }}</span></a></div>
     </div>
 @else
     {{ __('Cart empty') }}
