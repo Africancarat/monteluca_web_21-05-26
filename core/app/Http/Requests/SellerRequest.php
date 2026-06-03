@@ -28,6 +28,7 @@ class SellerRequest extends FormRequest
     {
 
         $id = Auth::check() ? ',' . Auth::user()->id : '';
+        $userId = Auth::check() ? (int) Auth::user()->id : null;
         $setting = Setting::first();
         $password = Auth::check() ? '' : 'required|';
         $passwordRules = ValidationRules::strongPassword(! Auth::check());
@@ -37,7 +38,7 @@ class SellerRequest extends FormRequest
             'g-recaptcha-response' => $setting->recaptcha == 1 ?  $password : '',
             'first_name' => $password . '|max:255',
             'last_name'  => 'required|max:255',
-            'phone'      => ValidationRules::phone('phone')['phone'],
+            'phone'      => ValidationRules::phoneUnique('phone', 'users', $userId)['phone'],
             'email'      => Auth::guard('admin')->check() ? 'required|email' : 'required|email|unique:users,email' . $id,
             'password'   => $passwordRules,
             'password_confirmation'   => [Auth::check() ? 'nullable' : 'required', 'string', 'required_with:password'],
@@ -59,6 +60,7 @@ class SellerRequest extends FormRequest
             'last_name.required' => __('Last Name field is required.'),
             'phone.required' => __('Phone Number is required.'),
             'phone.digits' => __('Phone number must contain exactly 10 digits.'),
+            'phone.unique' => __('This phone number already exists.'),
             'email.required' => __('Email field is required.'),
             'email.email'   => __('The email must be a valid email address.'),
             'password.required'    => __('Password field is required.'),

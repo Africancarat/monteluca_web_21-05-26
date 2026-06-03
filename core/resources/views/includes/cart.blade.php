@@ -164,7 +164,7 @@
             <div class="column"><a class="btn btn-luxury " href="{{ route('front.catalog') }}"><span><i
                             class="icon-arrow-left"></i> {{ __('Back to Shopping') }}</span></a></div>
             <div class="column"><a class="btn btn-luxury"
-                    href="{{ route('front.checkout.billing') }}"><span>{{ __('Checkout') }}</span></a></div>
+                    href="{{ \App\Support\CheckoutEntry::url() }}"><span>{{ __('Checkout') }}</span></a></div>
         </div>
     </div>
 </div>

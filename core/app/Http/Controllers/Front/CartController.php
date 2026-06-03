@@ -10,6 +10,7 @@ use App\{
 use App\Helpers\PriceHelper;
 use App\Models\ShippingService;
 use App\Services\InventoryReservationService;
+use App\Support\CheckoutEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
@@ -58,7 +59,7 @@ class CartController extends Controller
             Session::flash('success_message', __('Cart Added Successfully'));
             return back();
         }
-        return redirect()->route('front.checkout.billing')->withSuccess($msg);
+        return redirect()->to(CheckoutEntry::url())->withSuccess($msg);
     }
 
     public function destroy($id)

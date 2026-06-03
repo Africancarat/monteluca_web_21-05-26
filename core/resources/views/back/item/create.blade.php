@@ -339,7 +339,76 @@
                             <span class="switch-text">{{ __('Has Diamond') }}</span>
                         </label>
                     </div>
+                    <hr>
 
+                    <div class="form-group mb-2">
+                        <label class="switch-primary">
+                            <input type="checkbox"
+                                   class="switch switch-bootstrap radio-check"
+                                   name="has_gold_certificate"
+                                   value="1"
+                                   id="has_gold_certificate_toggle"
+                                    {{ old('has_gold_certificate') ? 'checked' : '' }}>
+
+                            <span class="switch-body"></span>
+                            <span class="switch-text">
+            {{ __('Has Gold ') }}
+        </span>
+                        </label>
+                    </div>
+                    <div id="gold_certificate_box"
+                         class="{{ old('has_gold_certificate') ? '' : 'd-none' }}">
+
+                        <h6 class="mb-2">
+                            <b>{{ __('Gold Certificate Details') }}</b>
+                        </h6>
+
+                        <div class="form-group">
+                            <label for="gold_certificate_number">
+                                {{ __('Certificate Number') }}
+                            </label>
+
+                            <input type="text"
+                                   name="gold_certificate_number"
+                                   id="gold_certificate_number"
+                                   class="form-control"
+                                   value="{{ old('gold_certificate_number') }}"
+                                   placeholder="{{ __('Enter Certificate Number') }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gold_certificate_pdf">
+                                {{ __('Certificate PDF') }}
+                            </label>
+
+                            <input type="file"
+                                   name="gold_certificate_pdf"
+                                   id="gold_certificate_pdf"
+                                   class="form-control"
+                                   accept=".pdf">
+
+                            <small class="text-muted">
+                                {{ __('Upload Gold Certificate PDF') }}
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gold_certificate_image">
+                                {{ __('Certificate Image') }}
+                            </label>
+
+                            <input type="file"
+                                   name="gold_certificate_image"
+                                   id="gold_certificate_image"
+                                   class="form-control"
+                                   accept=".jpg,.jpeg,image/jpeg">
+
+                            <small class="text-muted">
+                                {{ __('Upload Gold Certificate Image') }}
+                            </small>
+                        </div>
+
+                    </div>
                     <div id="diamond_details_box" class="{{ old('has_diamond') ? '' : 'd-none' }}">
                         <h6 class="mb-2"><b>{{ __('Diamond Details') }}</b></h6>
                         @php
@@ -425,9 +494,49 @@
                             <select name="lab" id="lab" class="form-control">
                                 <option value="">{{ __('Select One') }}</option>
                                 @foreach (['IGI','GIA','HRD','SGL','AGS','Other'] as $l)
-                                    <option value="{{ $l }}" {{ old('lab') === $l ? 'selected' : '' }}>{{ $l }}</option>
+                                    <option value="{{ $l }}" {{ old('lab', $da->lab ?? '') === $l ? 'selected' : '' }}>{{ $l }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                        <div class="form-group">
+
+                            <label for="diamond_type">
+
+                                {{ __('Diamond Type') }}
+
+                            </label>
+
+                            <select name="diamond_type"
+                                    id="diamond_type"
+                                    class="form-control">
+
+                                <option value="">
+                                    {{ __('Select One') }}
+                                </option>
+
+                                <option value="natural"
+                                        {{ old('diamond_type', $da->diamond_type ?? '') == 'natural' ? 'selected' : '' }}>
+
+                                    Natural
+
+                                </option>
+
+                                <option value="cvd"
+                                        {{ old('diamond_type', $da->diamond_type ?? '') == 'cvd' ? 'selected' : '' }}>
+
+                                    CVD
+
+                                </option>
+
+                                <option value="hpht"
+                                        {{ old('diamond_type', $da->diamond_type ?? '') == 'hpht' ? 'selected' : '' }}>
+
+                                    HPHT
+
+                                </option>
+
+                            </select>
+
                         </div>
 
                         <div class="form-group">

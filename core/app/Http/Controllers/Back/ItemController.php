@@ -6,6 +6,7 @@ use App\{
     Models\Item,
     Models\Gallery,
     Models\DiamondAttribute,
+    Models\GoldAttribute,
     Http\Requests\ItemRequest,
     Http\Controllers\Controller,
     Http\Requests\GalleryRequest,
@@ -294,7 +295,85 @@ class ItemController extends Controller
 
                 DiamondAttribute::where('item_id', $item->id)->delete();
             }
+            /*
+            |--------------------------------------------------------------------------
+            | Gold Certificate Details
+            |--------------------------------------------------------------------------
+            */
 
+            $hasGoldCertificate = (bool) $request->input('has_gold_certificate');
+
+            if ($hasGoldCertificate) {
+
+                $goldPdfPath = null;
+                $goldImagePath = null;
+
+                /*
+                |--------------------------------------------------------------------------
+                | Gold Certificate PDF Upload
+                |--------------------------------------------------------------------------
+                */
+
+                if ($request->hasFile('gold_certificate_pdf')) {
+
+                    $pdf = $request->file('gold_certificate_pdf');
+
+                    $pdfName = time() . '_gold_pdf_' . $pdf->getClientOriginalName();
+
+                    $pdf->storeAs(
+                        'public/gold-certificates',
+                        $pdfName
+                    );
+
+                    $goldPdfPath = 'gold-certificates/' . $pdfName;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Gold Certificate Image Upload
+                |--------------------------------------------------------------------------
+                */
+
+                if ($request->hasFile('gold_certificate_image')) {
+
+                    $image = $request->file('gold_certificate_image');
+
+                    $imageName = time() . '_gold_image_' . $image->getClientOriginalName();
+
+                    $image->storeAs(
+                        'public/gold-certificates',
+                        $imageName
+                    );
+
+                    $goldImagePath = 'gold-certificates/' . $imageName;
+                }
+
+                GoldAttribute::updateOrCreate(
+
+                    ['item_id' => $item->id],
+
+                    [
+
+                        'metal_type' => is_array($request->metal_type)
+                            ? json_encode($request->metal_type)
+                            : $request->metal_type,
+
+                        'gold_karat' => is_array($request->gold_karat)
+                            ? json_encode($request->gold_karat)
+                            : $request->gold_karat,
+
+                        'certificate_number' =>
+                            $request->gold_certificate_number,
+
+                        'certificate_pdf' =>
+                            $goldPdfPath,
+
+                        'certificate_image' =>
+                            $goldImagePath,
+
+                    ]
+                );
+            }
         }
 
         if ($request->is_button == 0) {
@@ -334,6 +413,9 @@ class ItemController extends Controller
 
         // Diamond details (one-to-one) — independent of item type.
         $hasDiamond = (bool) $request->input('has_diamond');
+        $hasGoldCertificate =
+            (bool) $request->input('has_gold_certificate');
+
         if ($hasDiamond) {
 
             $diamond = DiamondAttribute::firstOrNew([
@@ -439,6 +521,154 @@ class ItemController extends Controller
 
             DiamondAttribute::where('item_id', $item->id)->delete();
         }
+        if ($hasGoldCertificate) {
+
+            $gold = GoldAttribute::firstOrNew([
+                'item_id' => $item->id
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Existing Paths Preserve
+            |--------------------------------------------------------------------------
+            */
+
+            $goldPdfPath = $gold->certificate_pdf;
+
+            $goldImagePath = $gold->certificate_image;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Replace PDF
+            |--------------------------------------------------------------------------
+            */
+
+            if ($request->hasFile('gold_certificate_pdf')) {
+
+                if (
+                    $goldPdfPath &&
+                    Storage::exists('public/' . $goldPdfPath)
+                ) {
+                    Storage::delete('public/' . $goldPdfPath);
+                }
+
+                $pdf = $request->file(
+                    'gold_certificate_pdf'
+                );
+
+                $pdfName =
+                    time() . '_gold_pdf_' .
+                    $pdf->getClientOriginalName();
+
+                $pdf->storeAs(
+                    'public/gold-certificates',
+                    $pdfName
+                );
+
+                $goldPdfPath =
+                    'gold-certificates/' . $pdfName;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Replace Image
+            |--------------------------------------------------------------------------
+            */
+
+            if ($request->hasFile('gold_certificate_image')) {
+
+                if (
+                    $goldImagePath &&
+                    Storage::exists('public/' . $goldImagePath)
+                ) {
+                    Storage::delete('public/' . $goldImagePath);
+                }
+
+                $image = $request->file(
+                    'gold_certificate_image'
+                );
+
+                $imageName =
+                    time() . '_gold_image_' .
+                    $image->getClientOriginalName();
+
+                $image->storeAs(
+                    'public/gold-certificates',
+                    $imageName
+                );
+
+                $goldImagePath =
+                    'gold-certificates/' . $imageName;
+            }
+
+            GoldAttribute::updateOrCreate(
+
+                [
+                    'item_id' => $item->id
+                ],
+
+                [
+
+                    'metal_type' =>
+                        Item::normalizeJewelryOptionList(
+                            $request->metal_type
+                        ),
+
+                    'gold_karat' =>
+                        Item::normalizeJewelryOptionList(
+                            $request->gold_karat
+                        ),
+
+                    'certificate_number' =>
+                        $request->gold_certificate_number,
+
+                    'certificate_pdf' =>
+                        $goldPdfPath,
+
+                    'certificate_image' =>
+                        $goldImagePath,
+                ]
+            );
+        }
+
+        else {
+
+        $gold = GoldAttribute::where(
+            'item_id',
+            $item->id
+        )->first();
+
+        if ($gold) {
+
+            if (
+                $gold->certificate_pdf &&
+                Storage::exists(
+                    'public/' .
+                    $gold->certificate_pdf
+                )
+            ) {
+                Storage::delete(
+                    'public/' .
+                    $gold->certificate_pdf
+                );
+            }
+
+            if (
+                $gold->certificate_image &&
+                Storage::exists(
+                    'public/' .
+                    $gold->certificate_image
+                )
+            ) {
+                Storage::delete(
+                    'public/' .
+                    $gold->certificate_image
+                );
+            }
+
+            $gold->delete();
+        }
+    }
 
         if ($request->is_button == 0) {
             return redirect()->route('back.item.index')->withSuccess(__('Product Updated Successfully.'));

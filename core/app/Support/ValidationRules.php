@@ -123,6 +123,26 @@ final class ValidationRules
         return [$key => $rules];
     }
 
+    /**
+     * 10-digit phone + unique per row in the given table (e.g. users.phone).
+     */
+    public static function phoneUnique(
+        string $key = 'phone',
+        string $table = 'users',
+        ?int $ignoreId = null,
+        bool $required = true
+    ): array {
+        $rules = self::phone($key, $required)[$key];
+
+        $unique = Rule::unique($table, $key);
+        if ($ignoreId !== null) {
+            $unique->ignore($ignoreId);
+        }
+        $rules[] = $unique;
+
+        return [$key => $rules];
+    }
+
     public static function addressLine(string $key, bool $required = true): array
     {
         $rules = ['string', 'max:255'];

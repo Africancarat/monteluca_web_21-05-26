@@ -29,6 +29,7 @@ class UserRequest extends FormRequest
     {
 
         $id = Auth::check() ? ',' . Auth::user()->id : '';
+        $userId = Auth::check() ? (int) Auth::user()->id : null;
         $setting = Setting::first();
         $password = Auth::check() ? '' : 'required|';
         $passwordRules = ValidationRules::strongPassword(! Auth::check());
@@ -58,7 +59,7 @@ class UserRequest extends FormRequest
                 'max:2048'
             ],
             'last_name'  => 'required|max:255',
-            'phone'      => ValidationRules::phone('phone')['phone'],
+            'phone'      => ValidationRules::phoneUnique('phone', 'users', $userId)['phone'],
             'email'      => Auth::guard('admin')->check() ? 'required|email': 'required|email|unique:users,email'. $id,
             'password'   => $passwordRules,
             'password_confirmation'   => [Auth::check() ? 'nullable' : 'required', 'string', 'required_with:password'],
@@ -84,6 +85,7 @@ class UserRequest extends FormRequest
             'zip.required' => __('Zip Code is required.'),
             'phone.required' => __('Phone Number is required.'),
             'phone.digits' => __('Phone number must contain exactly 10 digits.'),
+            'phone.unique' => __('This phone number already exists.'),
             'email.required' => __('Email field is required.'),
             'email.email'   => __('The email must be a valid email address.'),
             'password.required'    => __('Password field is required.'),
