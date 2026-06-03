@@ -46,6 +46,10 @@ class AccountController extends Controller
             'progress' => Order::whereUserId($user->id)->whereOrderStatus('In Progress')->count(),
             'delivered' => Order::whereUserId($user->id)->whereOrderStatus('Delivered')->count(),
             'canceled' => Order::whereUserId($user->id)->whereOrderStatus('Canceled')->count(),
+            'Manufacturing' => Order::whereUserId($user->id)->whereOrderStatus('Manufacturing')->count(),
+            'shipped' => Order::whereUserId($user->id)->whereOrderStatus('shipped')->count(),
+            'Refunded' => Order::whereUserId($user->id)->whereOrderStatus('Refunded')->count(),
+
             'assignedReferralCodes' => $user->referralCodes()
                 ->where('status', ReferralCode::STATUS_ACTIVE)
                 ->latest()

@@ -76,6 +76,15 @@
                             </div>
                         </div>
                     </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card round">
+                                <div class="card-body text-center">
+                                    <i class="icon-shopping-bag"></i>
+                                    <p class="mt-3">{{__('Pending Order')}}</p>
+                                    <h4><b>{{$pending}}</b></h4>
+                                </div>
+                            </div>
+                        </div>
                     <div class="col-md-6 mb-4">
                         <div class="card round">
                             <div class="card-body text-center">
@@ -94,8 +103,24 @@
                             </div>
                         </div>
                     </div>
-
-
+                        <div class="col-md-6 mb-4">
+                            <div class="card round">
+                                <div class="card-body text-center">
+                                    <i class="icon-shopping-bag"></i>
+                                    <p class="mt-3">{{__('Manufacturing Order')}}</p>
+                                    <h4><b>{{$Manufacturing}}</b></h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card round">
+                                <div class="card-body text-center">
+                                    <i class="icon-shopping-bag"></i>
+                                    <p class="mt-3">{{__('shipped Order')}}</p>
+                                    <h4><b>{{$shipped}}</b></h4>
+                                </div>
+                            </div>
+                        </div>
                     <div class="col-md-6 mb-4">
                         <div class="card round">
                             <div class="card-body text-center">
@@ -105,78 +130,14 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-4">
-                        <div class="card round">
-                            <div class="card-body text-center">
-                                <i class="icon-shopping-bag"></i>
-                                <p class="mt-3">{{__('Pending Order')}}</p>
-                                <h4><b>{{$pending}}</b></h4>
-                            </div>
-                        </div>
-                    </div>
                         <div class="col-md-6 mb-4">
-
                             <div class="card round">
-
                                 <div class="card-body text-center">
-
-                                    <img src="{{ url('/core/public/storage/images/igi-logo.png') }}"
-                                         alt="IGI Logo"
-                                         style="height:60px;"
-                                         class="mb-3">
-
-                                    <h5 class="mb-3">
-
-                                        IGI Certificate Verification
-
-                                    </h5>
-
-                                    <p class="text-muted">
-
-                                        Authenticate your diamond certification directly through the official IGI portal.
-
-                                    </p>
-
-                                    <div class="mb-3 text-left">
-
-                                        <p class="mb-2">
-
-                                            <strong>Step 1:</strong>
-
-                                            Open the official IGI verification portal.
-
-                                        </p>
-
-                                        <p class="mb-2">
-
-                                            <strong>Step 2:</strong>
-
-                                            Enter your IGI certificate/report number.
-
-                                        </p>
-
-                                        <p class="mb-0">
-
-                                            <strong>Step 3:</strong>
-
-                                            Verify your certificate details.
-
-                                        </p>
-
-                                    </div>
-
-                                    <a href="https://www.igi.org/verify-your-report"
-                                       target="_blank"
-                                       class="btn btn-dark">
-
-                                        Verify Certificate
-
-                                    </a>
-
+                                    <i class="icon-shopping-bag"></i>
+                                    <p class="mt-3">{{__('Refunded Order')}}</p>
+                                    <h4><b>{{$Refunded}}</b></h4>
                                 </div>
-
                             </div>
-
                         </div>
                 </div>
           </div>

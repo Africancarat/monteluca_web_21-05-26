@@ -11,6 +11,11 @@
                 'description' => __('Your order is being prepared.'),
                 'icon' => 'fas fa-gem',
             ],
+               'Manufacturing' => [
+                'label' => __('Manufacturing'),
+                'description' => __('Your order is Manufacturing.'),
+                'icon' => 'fas fa-tools',
+            ],
             'Ready to Ship' => [
                 'label' => __('Ready to Ship'),
                 'description' => __('Your order is ready to be shipped.'),
