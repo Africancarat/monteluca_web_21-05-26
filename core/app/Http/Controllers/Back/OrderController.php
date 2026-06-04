@@ -11,7 +11,6 @@ use App\{
 use App\Helpers\SmsHelper;
 use App\Models\Notification;
 use App\Services\OrderInventoryService;
-use App\Services\OrderStatusMailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -124,6 +123,7 @@ class OrderController extends Controller
      */
     public function status($id,$field,$value)
     {
+        $value = trim(urldecode((string) $value));
 
         $order = Order::find($id);
         if($field == 'payment_status'){
@@ -166,14 +166,11 @@ class OrderController extends Controller
         }
         $this->setTrackOrder($order);
 
-        if ($field === 'order_status' && $previousStatus !== $value) {
-            app(OrderStatusMailService::class)->send($order->fresh(), $value);
-        }
-        
         $sms = new SmsHelper();
-        $user_number = $order->user->phone;
-        if($user_number){
-            $sms->SendSms($user_number,"'order_status'",$order->transaction_number);
+        $order->loadMissing('user');
+        $user_number = $order->user?->phone;
+        if ($user_number) {
+            $sms->SendSms($user_number, "'order_status'", $order->transaction_number);
         }
        
         return redirect()->route('back.order.index')->withSuccess(__('Status Updated Successfully.'));

@@ -15,6 +15,34 @@
         }
     @endphp
 
+    {{-- Consultations always visible to all admin staff --}}
+    <li class="nav-item {{ request()->is('admin/appointments*') || request()->is('admin/slots*') ? 'active' : '' }}">
+        <a data-toggle="collapse" href="#consultations">
+            <i class="fas fa-calendar-check"></i>
+            <p>{{ __('Consultations') }}</p>
+            <span class="caret"></span>
+        </a>
+        <div class="collapse {{ request()->is('admin/appointments*') || request()->is('admin/slots*') ? 'show' : '' }}" id="consultations">
+            <ul class="nav nav-collapse">
+                <li class="{{ request()->is('admin/appointments') ? 'active' : '' }}">
+                    <a class="sub-link" href="{{ route('back.appointments.index') }}">
+                        <span class="sub-item">{{ __('All Appointments') }}</span>
+                    </a>
+                </li>
+                <li class="{{ request()->is('admin/slots') ? 'active' : '' }}">
+                    <a class="sub-link" href="{{ route('back.slots.index') }}">
+                        <span class="sub-item">{{ __('Consultant Slots') }}</span>
+                    </a>
+                </li>
+                <li class="{{ request()->is('admin/slots/create') ? 'active' : '' }}">
+                    <a class="sub-link" href="{{ route('back.slots.create') }}">
+                        <span class="sub-item">{{ __('Open New Slots') }}</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </li>
+
     @if (in_array('Manage Categories',$section))
     <li class="nav-item">
         <a data-toggle="collapse" href="#category">

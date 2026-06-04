@@ -36,7 +36,19 @@ class EmailSendJob implements ShouldQueue
             : $email->sendCustomMail($this->emailData);
 
         if ($ok) {
-            Log::info('Queued email sent', ['to' => $this->emailData['to'] ?? null]);
+            Log::info('Queued email sent', [
+                'to' => $this->emailData['to'] ?? null,
+                'type' => $this->emailData['type'] ?? $this->type,
+                'order_id' => $this->emailData['order_id'] ?? null,
+            ]);
+
+            return;
         }
+
+        Log::warning('Queued email failed', [
+            'to' => $this->emailData['to'] ?? null,
+            'type' => $this->emailData['type'] ?? $this->type,
+            'order_id' => $this->emailData['order_id'] ?? null,
+        ]);
     }
 }

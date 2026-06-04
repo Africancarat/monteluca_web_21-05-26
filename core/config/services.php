@@ -35,4 +35,25 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'google' => [
+        'service_account_json' => storage_path('app/google-service-account.json'),
+        'calendar_id'          => env('GOOGLE_CALENDAR_ID', 'primary'),
+    ],
+
+    'twilio' => [
+        'sid'   => env('TWILIO_SID', ''),
+        'token' => env('TWILIO_AUTH_TOKEN', ''),
+        'from'  => env('TWILIO_WHATSAPP_FROM', 'whatsapp:+14155238886'),
+    ],
+
+    'store' => [
+        'name'              => env('STORE_NAME', 'African Carat'),
+        'address'           => env('STORE_ADDRESS', ''),
+        'city'              => env('STORE_CITY', ''),
+        'phone'             => env('STORE_PHONE', ''),
+        'email'             => env('STORE_EMAIL', ''),
+        'consultant_phone'  => env('CONSULTANT_WHATSAPP', ''),
+        'admin_email'       => env('BOOKING_ADMIN_EMAIL', ''),
+    ],
+
 ];

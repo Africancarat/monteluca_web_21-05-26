@@ -6,9 +6,6 @@ use Illuminate\{
     Auth\AuthenticationException,
     Foundation\Exceptions\Handler as ExceptionHandler
 };
-use Illuminate\Http\Exceptions\ThrottleRequestsException;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\TooManyAttemptsMail;
 
 use Exception;
 use Throwable;
@@ -58,32 +55,9 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-
-        if ($exception instanceof \Illuminate\Http\Exceptions\ThrottleRequestsException) {
-
-            $email = $request->email;
-
-            if ($email) {
-
-                \Mail::to($email)->send(
-
-                    new \App\Mail\TooManyAttemptsMail($email)
-
-                );
-
-            }
-
-            return back()->withErrors([
-
-                'email' => 'Too many login attempts. A security alert has been sent to your email.'
-
-            ]);
-
-        }
-
         return parent::render($request, $exception);
-
     }
+
     protected function unauthenticated($request, AuthenticationException $exception)
     {
         if ($request->is('admin') || $request->is('admin/*')) {

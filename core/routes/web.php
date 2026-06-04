@@ -23,8 +23,8 @@ Route::get('/core/public/storage/images/{path}', function ($path) {
 
 
 Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
-    Route::prefix('admin')->group(function () { 
-        //------------ AUTH ------------
+    Route::prefix('admin')->group(function () {
+        //------------ AUTH (no auth middleware — public login routes) ------------
         Route::get('/login', 'Auth\Back\LoginController@showForm')->name('back.login');
         Route::post('/login-submit', 'Auth\Back\LoginController@login')
             ->middleware('throttle:api-sensitive')
@@ -41,8 +41,11 @@ Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
             ->middleware('throttle:api-sensitive')
             ->name('back.change.password');
 
+        //------------ ALL PROTECTED ADMIN ROUTES ------------
+        Route::middleware('auth:admin')->group(function () {
+
         //------------ DASHBOARD & PROFILE ------------
-        Route::get('/', 'Back\AccountController@index')->name('back.dashboard');
+        Route::get('/', [App\Http\Controllers\Back\ConsultationDashboardController::class, 'index'])->name('back.dashboard');
         Route::get('/profile', 'Back\AccountController@profileForm')->name('back.profile');
         Route::post('/profile/update', 'Back\AccountController@updateProfile')->name('back.profile.update');
         Route::get('/password', 'Back\AccountController@passwordResetForm')->name('back.password');
@@ -50,6 +53,18 @@ Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
 
         Route::get('bulk/deletes', 'Back\BulkDeleteController@bulkDelete')->name('back.bulk.delete');
 
+
+        //------------ APPOINTMENTS ------------
+        Route::get('appointments', [App\Http\Controllers\Back\AdminAppointmentController::class, 'index'])->name('back.appointments.index');
+        Route::get('appointments/{appointment}', [App\Http\Controllers\Back\AdminAppointmentController::class, 'show'])->name('back.appointments.show');
+        Route::put('appointments/{appointment}', [App\Http\Controllers\Back\AdminAppointmentController::class, 'update'])->name('back.appointments.update');
+
+        //------------ CONSULTANT SLOTS ------------
+        Route::get('slots', [App\Http\Controllers\Back\AdminConsultantSlotController::class, 'index'])->name('back.slots.index');
+        Route::get('slots/create', [App\Http\Controllers\Back\AdminConsultantSlotController::class, 'create'])->name('back.slots.create');
+        Route::post('slots', [App\Http\Controllers\Back\AdminConsultantSlotController::class, 'store'])->name('back.slots.store');
+        Route::delete('slots/{slot}', [App\Http\Controllers\Back\AdminConsultantSlotController::class, 'destroy'])->name('back.slots.destroy');
+        Route::post('slots/bulk-delete', [App\Http\Controllers\Back\AdminConsultantSlotController::class, 'bulkDestroy'])->name('back.slots.bulk-destroy');
 
         Route::group(['middleware' => 'permissions:Manage Orders'], function () {
             //------------ ORDER ------------
@@ -59,7 +74,9 @@ Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
             Route::post('/order/update/{id}', 'Back\OrderController@update')->name('back.order.update');
             Route::get('/order/print/{id}', 'Back\OrderController@printOrder')->name('back.order.print');
             Route::get('/order/invoice/{id}', 'Back\OrderController@invoice')->name('back.order.invoice');
-            Route::get('/order/status/{id}/{field}/{value}', 'Back\OrderController@status')->name('back.order.status');
+            Route::get('/order/status/{id}/{field}/{value}', 'Back\OrderController@status')
+                ->where('value', '.*')
+                ->name('back.order.status');
         });
 
         Route::group(['middleware' => 'permissions:Manage Products'], function () {
@@ -321,6 +338,8 @@ Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
             Route::get('/subscribers/send-mail', 'Back\SubscriberController@sendMail')->name('back.subscribers.mail');
             Route::post('/subscribers/send-mail/submit', 'Back\SubscriberController@sendMailSubmit')->name('back.subscribers.mail.submit');
         });
+
+        }); // end auth:admin middleware group
     });
 });
 
@@ -537,6 +556,13 @@ Route::group(['middleware' => 'maintainance'], function () {
 
         //------------ HINT ------------
         Route::post('/hint/send', [App\Http\Controllers\Front\HintController::class, 'send'])->name('hint.send');
+
+        //------------ CONSULTATION BOOKING ------------
+        Route::get('/consultation', [App\Http\Controllers\BookingController::class, 'index'])->name('booking.index');
+        Route::get('/booking/available-dates', [App\Http\Controllers\BookingController::class, 'availableDates'])->name('booking.available-dates');
+        Route::get('/booking/slots', [App\Http\Controllers\BookingController::class, 'slots'])->name('booking.slots');
+        Route::post('/booking', [App\Http\Controllers\BookingController::class, 'store'])->name('booking.store');
+        Route::post('/booking/cancel', [App\Http\Controllers\BookingController::class, 'cancel'])->name('booking.cancel');
 
         //------------ PAGE ------------
         Route::get('/{slug}', 'Front\FrontendController@page')->name('front.page');

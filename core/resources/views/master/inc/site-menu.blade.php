@@ -22,7 +22,7 @@
 
                     <div class="luxury-mega-panel" role="navigation" aria-label="{{ $link['text'] }}">
                         <div class="luxury-mega-panel__scroll">
-                            <div class="container luxury-mega-panel__inner py-4 py-lg-5">
+                            <div class="container-fluid luxury-mega-panel__inner py-4 py-lg-5">
                                 @include('master.inc.mega-menus.' . $megaKey)
                             </div>
                         </div>
