@@ -487,30 +487,7 @@
                                             ] as [$label, $value])
                                                 @if($value !== null && $value !== '')
                                                     <tr>
-                                                        <td class="spec-label">{{ $label }}@php
-                                                                $verificationUrl = \App\Helpers\CertificationHelper::certificateLink(
-                                                                    $d->certificate_url ?? null,
-                                                                    $d->lab ?? null,
-                                                                    $d->certificate_number ?? null
-                                                                );
-                                                            @endphp
-
-                                                            @if($label === 'Certificate number' && filled($verificationUrl))
-
-                                                                <a href="{{ $verificationUrl }}"
-                                                                   target="_blank"
-                                                                   rel="noopener"
-                                                                   class="text-dark font-weight-bold">
-
-                                                                    {{ $value }}
-
-                                                                </a>
-
-                                                            @else
-
-                                                                {{ $value }}
-
-                                                            @endif</td>
+                                                        <td class="spec-label">{{ $label }}</td>
                                                         <td class="spec-value">
                                                             @if($label === 'Certificate number' && filled($d->certificate_url ?? null))
                                                                 <a href="{{ $d->certificate_url }}" target="_blank" rel="noopener">{{ $value }}</a>
@@ -523,21 +500,6 @@
                                             @endforeach
                                         </tbody>
                                     </table>
-                                    @if(filled($verificationUrl))
-
-                                        <div class="mt-4">
-
-                                            <a href="{{ $verificationUrl }}"
-                                               target="_blank"
-                                               class="btn btn-dark">
-
-                                                Verify Certificate
-
-                                            </a>
-
-                                        </div>
-
-                                    @endif
                                     @if (filled(trim(strip_tags($item->details ?? ''))))
                                         <div class="product-long-description rte-details mt-4">
                                             {!! $item->details !!}

@@ -336,7 +336,17 @@ body_theme4 @endif
 {{--                                         @endforeach--}}
 {{--                                     </div>--}}
 {{--                                 </div>--}}
-                                                            <div class="toolbar-item"><a href="{{ route('front.cart') }}"
+                                                                {{-- Book Consultation — matches toolbar-item structure exactly --}}
+                                <div class="toolbar-item d-none d-lg-block">
+                                    <a href="{{ route('booking.index') }}">
+                                        <div>
+                                            <span class="compare-icon"><i class="icon-message-circle"></i></span>
+                                            <span class="text-label">{{ __('Consult') }}</span>
+                                        </div>
+                                    </a>
+                                </div>
+
+                            <div class="toolbar-item"><a href="{{ route('front.cart') }}"
                                                                     class="toolbar-cart-link"
                                                                     title="{{ __('View cart') }}">
                                                                     <div><span class="cart-icon"><i class="icon-shopping-cart"></i><span
@@ -437,6 +447,13 @@ body_theme4 @endif
                                                                                             class="icon-chevron-right"></i>{{ __('Contact') }}</a>
                                                                                 </li>
                                                                             @endif
+                                                                            <li class="{{ request()->routeIs('booking.index') ? 'active' : '' }}">
+                                                                                <a href="{{ route('booking.index') }}"
+                                                                                   style="color:#b8a88a;font-weight:600;">
+                                                                                    <i class="icon-calendar"></i>
+                                                                                    {{ __('Book Consultation') }}
+                                                                                </a>
+                                                                            </li>
                                                                         </ul>
                                                                     </nav>
                                                                 </div>
