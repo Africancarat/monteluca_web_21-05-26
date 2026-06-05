@@ -221,6 +221,21 @@
                     </div>
                 </div>
             </div>
+            @php
+                $daForPdpShapes = $item->diamondAttribute;
+                $shapeOldForPdp = old('shape');
+                if (is_array($shapeOldForPdp)) {
+                    $shapeSelected = $shapeOldForPdp;
+                } else {
+                    $shapeSelected = is_array($daForPdpShapes?->shape)
+                        ? $daForPdpShapes->shape
+                        : (\App\Models\Item::normalizeJewelryOptionList($daForPdpShapes?->shape ?? null) ?? []);
+                }
+            @endphp
+            @include('back.item.partials.pdp-shape-metal-images', [
+                'item' => $item,
+                'shapeSelected' => $shapeSelected,
+            ])
         </div>
         <div class="col-lg-4">
             <div class="card">
@@ -356,16 +371,6 @@
                                 ? $item->gold_karat
                                 : (\App\Models\Item::normalizeJewelryOptionList($item->gold_karat) ?? []);
                         }
-
-                        $daForPdpShapes = $item->diamondAttribute;
-                        $shapeOldForPdp = old('shape');
-                        if (is_array($shapeOldForPdp)) {
-                            $shapeSelected = $shapeOldForPdp;
-                        } else {
-                            $shapeSelected = is_array($daForPdpShapes?->shape)
-                                ? $daForPdpShapes->shape
-                                : (\App\Models\Item::normalizeJewelryOptionList($daForPdpShapes?->shape ?? null) ?? []);
-                        }
                     @endphp
                     <div class="form-group">
                         <label for="metal_type">{{ __('Metal Type') }}</label>
@@ -403,11 +408,6 @@
                             {{ __('Stored as JSON.') }}
                         </small>
                     </div>
-
-                    @include('back.item.partials.pdp-shape-metal-images', [
-                        'item' => $item,
-                        'shapeSelected' => $shapeSelected,
-                    ])
 
                     @include('back.item.partials.complete-the-look', ['item' => $item])
 

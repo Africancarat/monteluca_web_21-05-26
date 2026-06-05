@@ -171,6 +171,13 @@
                     </div>
                 </div>
             </div>
+            @php
+                $shapeSelected = is_array(old('shape')) ? old('shape') : [];
+            @endphp
+            @include('back.item.partials.pdp-shape-metal-images', [
+                'item' => null,
+                'shapeSelected' => $shapeSelected,
+            ])
         </div>
         <div class="col-lg-4">
             <div class="card">
@@ -319,14 +326,6 @@
                             {{ __('Stored as JSON.') }}
                         </small>
                     </div>
-
-                    @php
-                        $shapeSelected = is_array(old('shape')) ? old('shape') : [];
-                    @endphp
-                    @include('back.item.partials.pdp-shape-metal-images', [
-                        'item' => null,
-                        'shapeSelected' => $shapeSelected,
-                    ])
 
                     @include('back.item.partials.complete-the-look')
 
