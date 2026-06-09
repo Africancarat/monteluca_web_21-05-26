@@ -1,9 +1,5 @@
 @extends('master.back')
 
-@php
-    use App\Helpers\GstHelper;
-@endphp
-
 @section('content')
 
     <!-- Start of Main Content -->
@@ -162,12 +158,11 @@
                                                 $option_price = 0;
                                                 $total = 0;
                                             @endphp
-                                            @php
-                                                $invoiceCartSubtotal = 0;
-                                            @endphp
                                             @foreach (json_decode($order->cart, true) as $item)
                                                 @php
-                                                    $invoiceCartSubtotal += ($item['main_price'] + $item['attribute_price']) * $item['qty'];
+                                                    $total += $item['main_price'] * $item['qty'];
+                                                    $option_price += $item['attribute_price'];
+                                                    $grandSubtotal = $total + $option_price;
                                                 @endphp
                                                 <tr>
                                                     <td class="px-0">
@@ -200,12 +195,6 @@
                                                         @if (! empty($item['clarity_grade'] ?? $item['pdp_diamond_clarity'] ?? null))
                                                             <div>{{ __('Diamond clarity') }}: {{ $item['clarity_grade'] ?? $item['pdp_diamond_clarity'] }}</div>
                                                         @endif
-                                                        @if (! empty($item['selected_shape'] ?? null))
-                                                            <div>{{ __('Selected Shape') }}: {{ $item['selected_shape'] }}</div>
-                                                        @endif
-                                                        @if (! empty($item['selected_carat'] ?? null))
-                                                            <div>{{ __('Selected Carat') }}: {{ $item['selected_carat'] }}</div>
-                                                        @endif
                                                     </td>
                                                     <td class="px-0">
                                                         {{ $item['qty'] }}
@@ -224,43 +213,11 @@
                                                     </td>
                                                 </tr>
                                             @endforeach
-                                            @php
-                                                $invoiceGst = GstHelper::splitForSubtotal((float) $invoiceCartSubtotal);
-                                            @endphp
                                             <tr>
                                                 <td class="padding-top-2x" colspan="5">
                                                 </td>
                                             </tr>
-                                            @if (($invoiceGst['total_tax'] ?? 0) > 0)
-                                                <tr>
-                                                    <td class="px-0 border-top border-top-2">
-                                                        <span class="text-muted">{{ __('CGST') }} ({{ $invoiceGst['cgst_percent'] }}%)</span>
-                                                    </td>
-                                                    <td class="px-0 text-right border-top border-top-2" colspan="5">
-                                                        <span>
-                                                            @if ($setting->currency_direction == 1)
-                                                                {{ $order->currency_sign }}{{ round($invoiceGst['cgst_amount'] * $order->currency_value, 2) }}
-                                                            @else
-                                                                {{ round($invoiceGst['cgst_amount'] * $order->currency_value, 2) }}{{ $order->currency_sign }}
-                                                            @endif
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="px-0 border-top border-top-2">
-                                                        <span class="text-muted">{{ __('SGST') }} ({{ $invoiceGst['sgst_percent'] }}%)</span>
-                                                    </td>
-                                                    <td class="px-0 text-right border-top border-top-2" colspan="5">
-                                                        <span>
-                                                            @if ($setting->currency_direction == 1)
-                                                                {{ $order->currency_sign }}{{ round($invoiceGst['sgst_amount'] * $order->currency_value, 2) }}
-                                                            @else
-                                                                {{ round($invoiceGst['sgst_amount'] * $order->currency_value, 2) }}{{ $order->currency_sign }}
-                                                            @endif
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            @elseif ($order->tax != 0)
+                                            @if ($order->tax != 0)
                                                 <tr>
                                                     <td class="px-0 border-top border-top-2">
                                                         <span class="text-muted">{{ __('Tax') }}</span>
@@ -276,7 +233,26 @@
                                                     </td>
                                                 </tr>
                                             @endif
-                                            @include('includes.order-discount-rows')
+                                            @if (json_decode($order->discount, true))
+                                                @php
+                                                    $discount = json_decode($order->discount, true);
+                                                @endphp
+                                                <tr>
+                                                    <td class="px-0 border-top border-top-2">
+                                                        <span class="text-muted">{{ __('Coupon discount') }}
+                                                            ({{ $discount['code']['code_name'] }})</span>
+                                                    </td>
+                                                    <td class="px-0 text-right border-top border-top-2" colspan="5">
+                                                        <span class="text-danger">
+                                                            @if ($setting->currency_direction == 1)
+                                                                -{{ $order->currency_sign }}{{ round($discount['discount'] * $order->currency_value, 2) }}
+                                                            @else
+                                                                -{{ round($discount['discount'] * $order->currency_value, 2) }}{{ $order->currency_sign }}
+                                                            @endif
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            @endif
                                             @if (json_decode($order->shipping, true))
                                                 @php
                                                     $shipping = json_decode($order->shipping, true);

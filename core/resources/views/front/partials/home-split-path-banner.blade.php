@@ -3,6 +3,18 @@
     $bgColor = $split['bg_color'] ?? '#F7F5F0';
     $bgImg = trim((string) ($split['bg_image'] ?? ''));
     $fgImg = trim((string) ($split['fg_image'] ?? ''));
+    $africanCaratEngagementImage = 'African carat/2.png';
+    if (is_file(public_path('storage/images/' . $africanCaratEngagementImage))) {
+        $fgImg = $africanCaratEngagementImage;
+    }
+    $splitStorageImageUrl = function (?string $relativePath): ?string {
+        $relativePath = ltrim(trim((string) $relativePath), '/');
+        if ($relativePath === '' || ! is_file(public_path('storage/images/' . $relativePath))) {
+            return null;
+        }
+
+        return url('/core/public/storage/images/' . implode('/', array_map('rawurlencode', explode('/', $relativePath))));
+    };
     $kicker = $split['kicker'] ?? '';
     $headline = $split['headline'] ?? '';
     $body = $split['body'] ?? '';
@@ -20,8 +32,8 @@
     $flu = trim((string) ($split['foot_link_url'] ?? ''));
 @endphp
 <section class="luxury-split-path-banner" style="@if ($bgImg === '')background-color: {{ e($bgColor) }};@endif">
-    @if ($bgImg !== '')
-        <div class="luxury-split-path-banner__bg-photo" style="background-image:url('{{ url('/core/public/storage/images/' . ltrim($bgImg, '/')) }}');" aria-hidden="true"></div>
+    @if ($bgImgUrl = $splitStorageImageUrl($bgImg))
+        <div class="luxury-split-path-banner__bg-photo" style="background-image:url('{{ $bgImgUrl }}');" aria-hidden="true"></div>
     @endif
     @if ($wm !== '')
         <div class="luxury-split-path-banner__watermark" aria-hidden="true">{{ $wm }}</div>
@@ -65,10 +77,10 @@
                 @endif
             </div>
             <div class="col-lg-6 order-1 order-lg-2 luxury-split-path-banner__visual">
-                @if ($fgImg !== '')
+                @if ($fgImgUrl = $splitStorageImageUrl($fgImg))
                     <div class="luxury-split-path-banner__figure">
-                        <img src="{{ url('/core/public/storage/images/' . ltrim($fgImg, '/')) }}"
-                            alt="{{ strip_tags($headline) }}"
+                        <img src="{{ $fgImgUrl }}"
+                            alt="{{ strip_tags($headline !== '' ? $headline : __('Engagement ring')) }}"
                             class="luxury-split-path-banner__fg"
                             loading="lazy">
                     </div>

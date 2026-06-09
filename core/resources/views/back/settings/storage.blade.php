@@ -30,7 +30,7 @@
 
                                     <h3 class="mb-3">
                                         <b>
-                                            {{ __('If images do not load, click once to connect storage. Existing uploads are copied to storage/app/public first — they are not deleted.') }}
+                                            {{ __('If you are facing issue with view image, Click this button to link your storage to the website.') }}
                                         </b>
                                     </h3>
                                     <div class="form-group p-0">

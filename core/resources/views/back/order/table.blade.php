@@ -40,90 +40,15 @@
                     id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     {{ $data->order_status }}
                 </button>
-{{--                <div class="dropdown-menu animated--fade-in" aria-labelledby="dropdownMenuButton">--}}
-{{--                    <a class="dropdown-item" data-toggle="modal" data-target="#statusModal" href="javascript:;"--}}
-{{--                        data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Pending']) }}">{{ __('Pending') }}</a>--}}
-{{--                    <a class="dropdown-item" data-toggle="modal" data-target="#statusModal" href="javascript:;"--}}
-{{--                        data-href="{{ route('back.order.status', [$data->id, 'order_status', 'In Progress']) }}">{{ __('In Progress') }}</a>--}}
-{{--                    <a class="dropdown-item" data-toggle="modal" data-target="#statusModal" href="javascript:;"--}}
-{{--                        data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Delivered']) }}">{{ __('Delivered') }}</a>--}}
-{{--                    <a class="dropdown-item" data-toggle="modal" data-target="#statusModal" href="javascript:;"--}}
-{{--                        data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Canceled']) }}">{{ __('Canceled') }}</a>--}}
-{{--                </div>--}}
-                <div class="dropdown-menu animated--fade-in"
-                     aria-labelledby="dropdownMenuButton">
-
-                    <a class="dropdown-item"
-                       data-toggle="modal"
-                       data-target="#statusModal"
-                       href="javascript:;"
-                       data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Pending']) }}">
-                        {{ __('Pending') }}
-                    </a>
-
-
-                    <a class="dropdown-item"
-                       data-toggle="modal"
-                       data-target="#statusModal"
-                       href="javascript:;"
-                       data-href="{{ route('back.order.status', [$data->id, 'order_status', 'In Progress']) }}">
-                        {{ __('In Progress') }}
-                    </a>
-
-
-                    <a class="dropdown-item"
-                       data-toggle="modal"
-                       data-target="#statusModal"
-                       href="javascript:;"
-                       data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Manufacturing']) }}">
-                        {{ __('Manufacturing') }}
-                    </a>
-
-
-                    <a class="dropdown-item"
-                       data-toggle="modal"
-                       data-target="#statusModal"
-                       href="javascript:;"
-                       data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Ready to Ship']) }}">
-                        {{ __('Ready to Ship') }}
-                    </a>
-
-
-                    <a class="dropdown-item"
-                       data-toggle="modal"
-                       data-target="#statusModal"
-                       href="javascript:;"
-                       data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Shipped']) }}">
-                        {{ __('Shipped') }}
-                    </a>
-
-
-                    <a class="dropdown-item"
-                       data-toggle="modal"
-                       data-target="#statusModal"
-                       href="javascript:;"
-                       data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Delivered']) }}">
-                        {{ __('Delivered') }}
-                    </a>
-
-
-                    <a class="dropdown-item"
-                       data-toggle="modal"
-                       data-target="#statusModal"
-                       href="javascript:;"
-                       data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Refunded']) }}">
-                        {{ __('Refunded') }}
-                    </a>
-
-
-                    <a class="dropdown-item"
-                       data-toggle="modal"
-                       data-target="#statusModal"
-                       href="javascript:;"
-                       data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Canceled']) }}">
-                        {{ __('Canceled') }}
-                    </a>
-
+                <div class="dropdown-menu animated--fade-in" aria-labelledby="dropdownMenuButton">
+                    <a class="dropdown-item" data-toggle="modal" data-target="#statusModal" href="javascript:;"
+                        data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Pending']) }}">{{ __('Pending') }}</a>
+                    <a class="dropdown-item" data-toggle="modal" data-target="#statusModal" href="javascript:;"
+                        data-href="{{ route('back.order.status', [$data->id, 'order_status', 'In Progress']) }}">{{ __('In Progress') }}</a>
+                    <a class="dropdown-item" data-toggle="modal" data-target="#statusModal" href="javascript:;"
+                        data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Delivered']) }}">{{ __('Delivered') }}</a>
+                    <a class="dropdown-item" data-toggle="modal" data-target="#statusModal" href="javascript:;"
+                        data-href="{{ route('back.order.status', [$data->id, 'order_status', 'Canceled']) }}">{{ __('Canceled') }}</a>
                 </div>
             </div>
         </td>

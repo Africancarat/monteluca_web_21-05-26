@@ -40,27 +40,7 @@
             <tbody>
              @foreach ($orders as $order)
              <tr>
-              <td>
-                <a class="navi-link" href="#" data-toggle="modal" data-target="#orderDetails">{{$order->transaction_number}}</a>
-                @php
-                    $histCart = is_string($order->cart) ? json_decode($order->cart, true) : [];
-                    $histLine = is_array($histCart) && $histCart !== [] ? reset($histCart) : null;
-                @endphp
-                @if (is_array($histLine))
-                    <div class="small text-muted mt-1" style="max-width: 280px;">
-                        {{ \Illuminate\Support\Str::limit($histLine['name'] ?? '', 40) }}
-                        @if (! empty($histLine['selected_shape'] ?? null))
-                            · {{ $histLine['selected_shape'] }}
-                        @endif
-                        @if (! empty($histLine['selected_carat'] ?? null))
-                            · {{ $histLine['selected_carat'] }} CT
-                        @endif
-                        @if (! empty($histLine['metal_type'] ?? $histLine['pdp_metal_type'] ?? null))
-                            · {{ $histLine['metal_type'] ?? $histLine['pdp_metal_type'] }}
-                        @endif
-                    </div>
-                @endif
-              </td>
+              <td><a class="navi-link" href="#" data-toggle="modal" data-target="#orderDetails">{{$order->transaction_number}}</a></td>
               <td>
                 @if ($setting->currency_direction == 1)
                 {{$order->currency_sign}}{{PriceHelper::OrderTotal($order)}}

@@ -320,15 +320,29 @@
                         </small>
                     </div>
 
-                    @php
-                        $shapeSelected = is_array(old('shape')) ? old('shape') : [];
-                    @endphp
-                    @include('back.item.partials.pdp-shape-metal-images', [
-                        'item' => null,
-                        'shapeSelected' => $shapeSelected,
-                    ])
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h6 class="mb-2"><b>{{ __('Metal images (PDP)') }}</b></h6>
+                            <p class="small text-muted mb-3">
+                                {{ __('Optional. Upload one image per metal type to enable metal-based image switching on the product page.') }}
+                            </p>
 
-                    @include('back.item.partials.complete-the-look')
+                            <div class="form-group">
+                                <label class="d-block">{{ __('Yellow Gold Images') }}</label>
+                                <div class="small text-muted">
+                                    {{ __('Automatically uses Featured image + Gallery images as Yellow Gold.') }}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="d-block">{{ __('Rose Gold Image') }}</label>
+                                <input type="file" name="pdp_metal_images_rose[]" accept="image/*" class="form-control" multiple>
+                            </div>
+                            <div class="form-group mb-0">
+                                <label class="d-block">{{ __('White Gold Image') }}</label>
+                                <input type="file" name="pdp_metal_images_white[]" accept="image/*" class="form-control" multiple>
+                            </div>
+                        </div>
+                    </div>
 
                     <hr>
                     <div class="form-group mb-2">
@@ -339,76 +353,7 @@
                             <span class="switch-text">{{ __('Has Diamond') }}</span>
                         </label>
                     </div>
-                    <hr>
 
-                    <div class="form-group mb-2">
-                        <label class="switch-primary">
-                            <input type="checkbox"
-                                   class="switch switch-bootstrap radio-check"
-                                   name="has_gold_certificate"
-                                   value="1"
-                                   id="has_gold_certificate_toggle"
-                                    {{ old('has_gold_certificate') ? 'checked' : '' }}>
-
-                            <span class="switch-body"></span>
-                            <span class="switch-text">
-            {{ __('Has Gold ') }}
-        </span>
-                        </label>
-                    </div>
-                    <div id="gold_certificate_box"
-                         class="{{ old('has_gold_certificate') ? '' : 'd-none' }}">
-
-                        <h6 class="mb-2">
-                            <b>{{ __('Gold Certificate Details') }}</b>
-                        </h6>
-
-                        <div class="form-group">
-                            <label for="gold_certificate_number">
-                                {{ __('Certificate Number') }}
-                            </label>
-
-                            <input type="text"
-                                   name="gold_certificate_number"
-                                   id="gold_certificate_number"
-                                   class="form-control"
-                                   value="{{ old('gold_certificate_number') }}"
-                                   placeholder="{{ __('Enter Certificate Number') }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="gold_certificate_pdf">
-                                {{ __('Certificate PDF') }}
-                            </label>
-
-                            <input type="file"
-                                   name="gold_certificate_pdf"
-                                   id="gold_certificate_pdf"
-                                   class="form-control"
-                                   accept=".pdf">
-
-                            <small class="text-muted">
-                                {{ __('Upload Gold Certificate PDF') }}
-                            </small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="gold_certificate_image">
-                                {{ __('Certificate Image') }}
-                            </label>
-
-                            <input type="file"
-                                   name="gold_certificate_image"
-                                   id="gold_certificate_image"
-                                   class="form-control"
-                                   accept=".jpg,.jpeg,image/jpeg">
-
-                            <small class="text-muted">
-                                {{ __('Upload Gold Certificate Image') }}
-                            </small>
-                        </div>
-
-                    </div>
                     <div id="diamond_details_box" class="{{ old('has_diamond') ? '' : 'd-none' }}">
                         <h6 class="mb-2"><b>{{ __('Diamond Details') }}</b></h6>
                         @php
@@ -416,8 +361,6 @@
                             $colorSelected = is_array($colorOld) ? $colorOld : [];
                             $clarityOld = old('clarity_grade');
                             $claritySelected = is_array($clarityOld) ? $clarityOld : [];
-                            $shapeOld = old('shape');
-                            $shapeSelected = is_array($shapeOld) ? $shapeOld : [];
                         @endphp
 
                         <div class="form-group">
@@ -428,27 +371,12 @@
 
                         <div class="form-group">
                             <label for="shape">{{ __('Shape') }}</label>
-
-                            <select name="shape[]" id="shape"
-                                    class="form-control"
-                                    multiple
-                                    size="5">
-
+                            <select name="shape" id="shape" class="form-control">
+                                <option value="">{{ __('Select One') }}</option>
                                 @foreach (['Round','Princess','Oval','Cushion','Radiant','Pear','Emerald','Asscher','Marquise','Heart'] as $s)
-                                    <option value="{{ $s }}"
-                                            {{ in_array($s, $shapeSelected ?? [], true) ? 'selected' : '' }}>
-                                        {{ $s }}
-                                    </option>
+                                    <option value="{{ $s }}" {{ old('shape') === $s ? 'selected' : '' }}>{{ $s }}</option>
                                 @endforeach
-
                             </select>
-
-                            <small class="text-muted d-block mt-1">
-                                {{ __('Click options to toggle selection (no Ctrl/Cmd).') }}
-                                <span id="shape_selection_count"
-                                      class="text-dark font-weight-bold"></span>
-                                {{ __('Stored as JSON.') }}
-                            </small>
                         </div>
 
                         <div class="form-group">
@@ -493,85 +421,16 @@
                             <label for="lab">{{ __('Lab') }}</label>
                             <select name="lab" id="lab" class="form-control">
                                 <option value="">{{ __('Select One') }}</option>
-                                @foreach (['IGI','GIA','HRD','SGL','AGS','Other'] as $l)
-                                    <option value="{{ $l }}" {{ old('lab', $da->lab ?? '') === $l ? 'selected' : '' }}>{{ $l }}</option>
+                                @foreach (['IGI','GIA','HRD','AGS','Other'] as $l)
+                                    <option value="{{ $l }}" {{ old('lab') === $l ? 'selected' : '' }}>{{ $l }}</option>
                                 @endforeach
                             </select>
-                        </div>
-                        <div class="form-group">
-
-                            <label for="diamond_type">
-
-                                {{ __('Diamond Type') }}
-
-                            </label>
-
-                            <select name="diamond_type"
-                                    id="diamond_type"
-                                    class="form-control">
-
-                                <option value="">
-                                    {{ __('Select One') }}
-                                </option>
-
-                                <option value="natural"
-                                        {{ old('diamond_type', $da->diamond_type ?? '') == 'natural' ? 'selected' : '' }}>
-
-                                    Natural
-
-                                </option>
-
-                                <option value="cvd"
-                                        {{ old('diamond_type', $da->diamond_type ?? '') == 'cvd' ? 'selected' : '' }}>
-
-                                    CVD
-
-                                </option>
-
-                                <option value="hpht"
-                                        {{ old('diamond_type', $da->diamond_type ?? '') == 'hpht' ? 'selected' : '' }}>
-
-                                    HPHT
-
-                                </option>
-
-                            </select>
-
                         </div>
 
                         <div class="form-group">
                             <label for="certificate_number">{{ __('Certificate Number') }}</label>
                             <input type="text" name="certificate_number" id="certificate_number" class="form-control"
                                 value="{{ old('certificate_number') }}" placeholder="{{ __('e.g. IGI-123456789') }}">
-                        </div>
-                        {{-- ADD THIS AFTER "Certificate Number" FIELD INSIDE diamond_details_box --}}
-
-                        <div class="form-group">
-                            <label for="certificate_report_pdf">{{ __('Certificate PDF') }}</label>
-
-                            <input type="file"
-                                   name="certificate_report_pdf"
-                                   id="certificate_report_pdf"
-                                   class="form-control"
-                                   accept=".pdf">
-
-                            <small class="text-muted">
-                                {{ __('Upload IGI/GIA/SGL certificate PDF') }}
-                            </small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="certificate_report_image">{{ __('Certificate Image') }}</label>
-
-                            <input type="file"
-                                   name="certificate_report_image"
-                                   id="certificate_report_image"
-                                   class="form-control"
-                                   accept="image/*">
-
-                            <small class="text-muted">
-                                {{ __('Upload certificate image') }}
-                            </small>
                         </div>
 
                         <div class="form-group">
@@ -628,6 +487,21 @@
 
     </div>
 </form>
+
+<script>
+    (function () {
+        var t = document.getElementById('has_diamond_toggle');
+        var box = document.getElementById('diamond_details_box');
+        if (!t || !box) return;
+        t.addEventListener('change', function () {
+            if (this.checked) {
+                box.classList.remove('d-none');
+            } else {
+                box.classList.add('d-none');
+            }
+        });
+    })();
+</script>
 <script>
     (function () {
         function countSelected(select) {
@@ -682,30 +556,12 @@
         bindJewelryMultiSelect('gold_karat', 'gold_karat_selection_count');
         bindJewelryMultiSelect('color_grade', 'color_grade_selection_count');
         bindJewelryMultiSelect('clarity_grade', 'clarity_grade_selection_count');
-        bindJewelryMultiSelect('shape', 'shape_selection_count');
-    })();
-    (function () {
-        var t = document.getElementById('has_diamond_toggle');
-        var box = document.getElementById('diamond_details_box');
-        if (!t || !box) return;
-        t.addEventListener('change', function () {
-            if (this.checked) {
-                box.classList.remove('d-none');
-            } else {
-                box.classList.add('d-none');
-            }
-        });
     })();
 </script>
+
+
 </div>
+
 </div>
 
-@endsection
-
-@section('styles')
-    <link rel="stylesheet" href="{{ asset('assets/back/css/select2.css') }}">
-@endsection
-
-@section('scripts')
-    @include('back.item.partials.complete-the-look-scripts')
 @endsection

@@ -6,18 +6,11 @@
 
 @section('content')
 
-    @if ($setting->is_slider == 1)
-        @php
-            $hero = $sliders->first();
-            $heroVideo = ($hero && $hero->link && preg_match('/\.(mp4|webm)(\?|#|$)/i', trim((string) $hero->link))) ? trim((string) $hero->link) : null;
-        @endphp
-        @include('components.luxury-hero', [
-            'heroImage' => $hero ? url('/core/public/storage/images/' . $hero->photo) : asset('images/hero-diamond.jpg'),
-            'heroVideo' => $heroVideo,
-            'title' => $hero ? e($hero->title) . '<br><span class="fs-5 fw-light">' . e($hero->details) . '</span>' : null,
-            'primaryLink' => route('diamonds.index'),
-            'primaryLabel' => __('Explore diamonds'),
-        ])
+    @php
+        $hasHomeHeroVideo = is_file(public_path('storage/images/African_Carat_Ads_3.mp4'));
+    @endphp
+    @if ($setting->is_slider == 1 || $hasHomeHeroVideo)
+        @include('components.home-luxury-hero')
     @endif
 
 

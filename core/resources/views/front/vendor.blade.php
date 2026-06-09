@@ -80,17 +80,8 @@
                         </div>
                     </div>
                     <div class="col-md-2 gd-text-sm-center">
-                        <div class="shop-view" role="group" aria-label="{{ __('Catalog view') }}">
-                            <a class="list-view grid-view {{ Session::has('view_catalog') && Session::get('view_catalog') == 'grid' ? 'active' : '' }}"
-                                data-step="grid" href="javascript:;" data-href="{{ route('front.catalog') . '?view_check=grid' }}"
-                                title="{{ __('Grid view') }}" aria-label="{{ __('Grid view') }}">
-                                <i class="fas fa-th-large" aria-hidden="true"></i>
-                            </a>
-                            <a class="list-view {{ Session::has('view_catalog') && Session::get('view_catalog') == 'list' ? 'active' : '' }}"
-                                data-step="list" href="javascript:;" data-href="{{ route('front.catalog') . '?view_check=list' }}"
-                                title="{{ __('List view') }}" aria-label="{{ __('List view') }}">
-                                <i class="fas fa-list" aria-hidden="true"></i>
-                            </a>
+                        <div class="shop-view"><a class="list-view {{Session::has('view_catalog') && Session::get('view_catalog') == 'grid' ? 'active' : ''}} " data-step="grid" href="javascript:;" data-href="{{route('front.catalog').'?view_check=grid'}}"><i class="fas fa-th-large"></i></a>
+                            <a class="list-view {{Session::has('view_catalog') && Session::get('view_catalog') == 'list' ? 'active' : ''}}" href="javascript:;" data-step="list" data-href="{{route('front.catalog').'?view_check=list'}}"><i class="fas fa-list"></i></a>
                         </div>
                     </div>
                 </div>

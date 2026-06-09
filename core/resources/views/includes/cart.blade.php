@@ -83,16 +83,6 @@
                                  @if (! empty($cartClarityGrade))
                                      <div class="small text-muted">{{ __('Diamond clarity') }}: {{ $cartClarityGrade }}</div>
                                  @endif
-                                 @php
-                                     $cartShape = $item['selected_shape'] ?? null;
-                                     $cartCarat = $item['selected_carat'] ?? ($item['carat_weight'] ?? null);
-                                 @endphp
-                                 @if (! empty($cartShape))
-                                     <div class="small text-muted">{{ __('Shape') }}: {{ $cartShape }}</div>
-                                 @endif
-                                 @if (! empty($cartCarat))
-                                     <div class="small text-muted">{{ __('Carat') }}: {{ $cartCarat }} CT</div>
-                                 @endif
 {{--                                 @if (! empty($item['engraving']))--}}
 {{--                                     <div class="small text-muted">{{ __('Engraving') }}: {{ $item['engraving'] }}</div>--}}
 {{--                                 @endif--}}
@@ -164,7 +154,7 @@
             <div class="column"><a class="btn btn-luxury " href="{{ route('front.catalog') }}"><span><i
                             class="icon-arrow-left"></i> {{ __('Back to Shopping') }}</span></a></div>
             <div class="column"><a class="btn btn-luxury"
-                    href="{{ \App\Support\CheckoutEntry::url() }}"><span>{{ __('Checkout') }}</span></a></div>
+                    href="{{ route('front.checkout.billing') }}"><span>{{ __('Checkout') }}</span></a></div>
         </div>
     </div>
 </div>

@@ -19,7 +19,7 @@
                             $daClarity = is_array($da->clarity_grade ?? null) ? implode(', ', $da->clarity_grade) : ($da->clarity_grade ?? '');
                         @endphp
                         <ul class="diamond-card__specs small text-muted list-unstyled mb-2">
-                            <li>{{ $da->shapeDisplay() }} · {{ $da->carat_weight }} ct</li>
+                            <li>{{ $da->shape }} · {{ $da->carat_weight }} ct</li>
                             <li>{{ __('Cut') }} {{ $da->cut_grade }} · {{ __('Colour') }} {{ $daColor }} · {{ __('Clarity') }} {{ $daClarity }}</li>
                             @if($da->lab)
                                 <li>
@@ -29,7 +29,7 @@
                                     @endif
                                 </li>
                             @endif
-                            <li>{{ $da->is_lab_grown ? __('Lab-grown') : __('Natural') }}</li>
+                            <li>{{__('Natural') }}</li>
                         </ul>
                     @endif
                     <div class="mt-auto d-flex flex-wrap gap-2 align-items-center">

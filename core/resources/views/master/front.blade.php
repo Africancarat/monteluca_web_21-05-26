@@ -1,14 +1,24 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
+    @php
+        $siteFavicon = $setting->favicon;
+        foreach (['AfricanCarat-Logo/favicon.png', 'AfricanCarat-Logo/1.png', 'African carat/1.png'] as $faviconCandidate) {
+            if (is_file(public_path('storage/images/' . $faviconCandidate))) {
+                $siteFavicon = $faviconCandidate;
+                break;
+            }
+        }
+        $siteFaviconUrl = url('/core/public/storage/images/' . $siteFavicon);
+    @endphp
     <link rel="manifest" href="{{ url('/core/public/manifest.json') }}">
     <meta name="pwa-sw-url" content="{{ url('/core/public/sw.js') }}">
     <meta name="theme-color" content="#0A0A0A">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="apple-touch-icon" href="/images/icon-192.png">
+    <link rel="apple-touch-icon" href="{{ $siteFaviconUrl }}">
 @if (url()->current() == route('front.index'))
         <title>@yield('hometitle')</title>
     @else
@@ -40,18 +50,16 @@
     <!-- Mobile Specific Meta Tag-->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <!-- Favicon Icons-->
-    <link rel="icon" type="image/png" href="{{ url('/core/public/storage/images/' . $setting->favicon) }}">
-    <link rel="apple-touch-icon" href="{{ url('/core/public/storage/images/' . $setting->favicon) }}">
-    <link rel="apple-touch-icon" sizes="152x152" href="{{ url('/core/public/storage/images/' . $setting->favicon) }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ url('/core/public/storage/images/' . $setting->favicon) }}">
-    <link rel="apple-touch-icon" sizes="167x167" href="{{ url('/core/public/storage/images/' . $setting->favicon) }}">
+    <!-- Favicon Icons (African Carat file when present, else admin upload) -->
+    <link rel="icon" type="image/png" href="{{ $siteFaviconUrl }}">
+    <link rel="apple-touch-icon" href="{{ $siteFaviconUrl }}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ $siteFaviconUrl }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ $siteFaviconUrl }}">
+    <link rel="apple-touch-icon" sizes="167x167" href="{{ $siteFaviconUrl }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400;500&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 
     <!-- Vendor Styles including: Bootstrap, Font Icons, Plugins, etc.-->
     <link rel="stylesheet" media="screen" href="{{ asset('assets/front/css/plugins.min.css') }}">
@@ -74,6 +82,9 @@
     @endif
 
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    <link rel="stylesheet" href="{{ asset('assets/front/css/hw-header.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/front/css/fonts-williams-caslon.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/front/css/mobile-responsive.css') }}">
 
     <style>
         {{ $setting->custom_css }}
@@ -122,365 +133,8 @@ body_theme4 @endif
         <!-- Preloader endif -->
     @endif
 
-    {{-- Top trust bar (James Allen–style: first thing in viewport above main header) --}}
-    @include('components.trust-strip')
+    @include('master.inc.hw-header')
 
-    <!-- Header-->
-
-    <header class="site-header navbar-sticky">
-        {{-- Utility row: mobile/tablet only; desktop utilities live in .toolbar beside cart --}}
-        <div class="menu-top-area d-lg-none">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="t-m-s-a">
-                            <a class="track-order-link" href="{{ route('front.order.track') }}"><i
-                                    class="icon-map-pin"></i>{{ __('Track Order') }}</a>
-                            <a class="track-order-link compare-mobile d-lg-none"
-                                href="{{ route('diamonds.compare.index') }}">{{ __('Compare') }}</a>
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="right-area">
-
-                            <a class="track-order-link wishlist-mobile d-inline-block d-lg-none"
-                                href="{{ route('user.wishlist.index') }}"><i
-                                    class="icon-heart"></i>{{ __('Wishlist') }}</a>
-
-                            <div class="t-h-dropdown ">
-                                <a class="main-link" href="#">{{ __('Currency') }}<i
-                                        class="icon-chevron-down"></i></a>
-                                <div class="t-h-dropdown-menu">
-                                    @foreach (DB::table('currencies')->get() as $currency)
-                                        <a class="{{ Session::get('currency') == $currency->id ? 'active' : ($currency->is_default == 1 && !Session::has('currency') ? 'active' : '') }}"
-                                            href="{{ route('front.currency.setup', $currency->id) }}"><i
-                                                class="icon-chevron-right pr-2"></i>{{ $currency->name }}</a>
-                                    @endforeach
-                                </div>
-                            </div>
-
-                            <div class="login-register ">
-                                @if (!Auth::user())
-                                    <a class="track-order-link mr-0" href="{{ route('user.login') }}">
-                                        {{ __('Login') }}
-                                    </a>
-                                @else
-                                    <div class="t-h-dropdown">
-                                        <div class="main-link">
-                                            <i class="icon-user pr-2"></i> <span
-                                                class="text-label">{{ Auth::user()->first_name }}</span>
-                                        </div>
-                                        <div class="t-h-dropdown-menu">
-                                            <a href="{{ route('user.dashboard') }}"><i
-                                                    class="icon-chevron-right pr-2"></i>{{ __('Dashboard') }}</a>
-                                            <a href="{{ route('user.logout') }}"><i
-                                                    class="icon-chevron-right pr-2"></i>{{ __('Logout') }}</a>
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Topbar-->
-        <div class="topbar">
-            <div class="container">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="d-flex justify-content-between">
-                            <!-- Logo-->
-                            <div class="site-branding"><a class="site-logo align-self-center"
-                                    href="{{ route('front.index') }}"><img
-                                        src="{{ url('/core/public/storage/images/' . $setting->logo) }}"
-                                        alt="{{ $setting->title }}"></a></div>
-                            <!-- Search / Categories-->
-                            <div class="search-box-wrap d-none d-lg-block d-flex">
-                                <div class="search-box-inner align-self-center">
-                                    <div class="search-box d-flex">
-{{--                                        <select name="category" id="category_select" class="categoris">--}}
-{{--                                            <option value="">{{ __('All') }}</option>--}}
-{{--                                            @foreach (DB::table('categories')->whereStatus(1)->get() as $category)--}}
-{{--                                                <option value="{{ $category->slug }}">{{ $category->name }}</option>--}}
-{{--                                            @endforeach--}}
-{{--                                        </select>--}}
-                                        <form class="input-group" id="header_search_form"
-                                            action="{{ route('front.catalog') }}" method="get">
-                                            <input type="hidden" name="category" value=""
-                                                id="search__category">
-                                            <span class="input-group-btn">
-                                                <button type="submit"><i class="icon-search"></i></button>
-                                            </span>
-                                            <input class="form-control" type="text"
-                                                data-target="{{ route('front.search.suggest') }}"
-                                                id="__product__search" name="search"
-                                                placeholder="{{ __('Search by product name') }}">
-                                            <div class="serch-result d-none">
-                                                {{-- search result --}}
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                                <span class="d-block d-lg-none close-m-serch"><i class="icon-x"></i></span>
-                            </div>
-                            <!-- Toolbar-->
-                            <div class="toolbar d-flex">
-
-                                <div class="toolbar-item close-m-serch visible-on-mobile"><a href="#">
-                                        <div>
-                                            <i class="icon-search"></i>
-                                        </div>
-                                    </a>
-                                </div>
-                                <div class="toolbar-item visible-on-mobile mobile-menu-toggle"><a href="#">
-                                        <div><i class="icon-menu"></i><span
-                                                class="text-label">{{ __('Menu') }}</span></div>
-                                    </a>
-                                </div>
-
-                                <div class="toolbar-item hidden-on-mobile"><a
-                                        href="{{ route('diamonds.compare.index') }}">
-                                        <div><span class="compare-icon"><i class="icon-repeat"></i><span
-                                                    class="count-label compare_count">{{ Session::has('diamond_compare') ? count(Session::get('diamond_compare')) : '0' }}</span></span><span
-                                                class="text-label">{{ __('Compare') }}</span></div>
-                                    </a>
-                                </div>
-                                @if (Auth::check())
-                                    <div class="toolbar-item hidden-on-mobile"><a
-                                            href="{{ route('user.wishlist.index') }}">
-                                            <div><span class="compare-icon"><i class="icon-heart"></i><span
-                                                        class="count-label wishlist_count">{{ Auth::user()->wishlists->count() }}</span></span><span
-                                                    class="text-label">{{ __('Wishlist') }}</span></div>
-                                        </a>
-                                    </div>
-                                @else
-                                    <div class="toolbar-item hidden-on-mobile"><a
-                                            href="{{ route('user.wishlist.index') }}">
-                                            <div><span class="compare-icon"><i class="icon-heart"></i></span><span
-                                                    class="text-label">{{ __('Wishlist') }}</span></div>
-                                        </a>
-                                    </div>
-                                @endif
-
-                                {{-- Desktop: Track Order, Currency, Login — same structure as Compare/Cart (.toolbar-item > a > div + optional .toolbar-dropdown) --}}
-                                <div class="toolbar-item d-none d-lg-block toolbar-item--meta">
-                                    <a href="{{ route('front.order.track') }}">
-                                        <div>
-                                            <span class="compare-icon"><i class="icon-map-pin"></i></span>
-                                            <span class="text-label">{{ __('Track Order') }}</span>
-                                        </div>
-                                    </a>
-                                </div>
-                                <div class="toolbar-item d-none d-lg-block toolbar-item--meta">
-                                    <a href="#" role="button"
-                                        onclick="event.preventDefault();"
-                                        aria-haspopup="true"
-                                        aria-expanded="false">{{-- hover opens sibling .toolbar-dropdown (theme CSS) --}}
-                                        <div>
-                                            <span class="compare-icon"><i class="icon-globe"></i></span>
-                                            <span class="text-label">{{ __('Currency') }}</span>
-                                        </div>
-                                    </a>
-
-                                    <div class="toolbar-dropdown currency-toolbar-dropdown" role="menu">
-                                        @foreach (DB::table('currencies')->get() as $currency)
-                                            <li>
-                                                <a role="menuitem"
-                                                    class="{{ Session::get('currency') == $currency->id ? 'active' : ($currency->is_default == 1 && !Session::has('currency') ? 'active' : '') }}"
-                                                    href="{{ route('front.currency.setup', $currency->id) }}"><i
-                                                        class="icon-chevron-right pr-2"></i>{{ $currency->name }}</a>
-                                            </li>
-                                        @endforeach
-                                    </div>
-                                </div>
-                                <div class="toolbar-item d-none d-lg-block toolbar-item--meta">
-                                    @if (!Auth::user())
-                                        <a href="{{ route('user.login') }}">
-                                            <div>
-                                                <span class="compare-icon"><i class="icon-log-in"></i></span>
-                                                <span class="text-label">{{ __('Login') }}</span>
-                                            </div>
-                                        </a>
-                                    @else
-                                        <a href="#" role="button" onclick="event.preventDefault();" aria-haspopup="true">
-                                            <div>
-                                                <span class="compare-icon"><i class="icon-user"></i></span>
-                                                <span class="text-label">{{ Auth::user()->first_name }}</span>
-                                            </div>
-                                        </a>
-                                        <div class="toolbar-dropdown account-toolbar-dropdown" role="menu">
-                                            <li>
-                                                <a role="menuitem"
-                                                    href="{{ route('user.dashboard') }}"><i
-                                                        class="icon-chevron-right pr-2"></i>{{ __('Dashboard') }}</a>
-                                            </li>
-                                            <li>
-                                                <a role="menuitem"
-                                                    href="{{ route('user.logout') }}"><i
-                                                        class="icon-chevron-right pr-2"></i>{{ __('Logout') }}</a>
-                                            </li>
-                                        </div>
-                                    @endif
-                                </div>
-{{--                                 <div class="t-h-dropdown ">--}}
-{{--                                     <a class="main-link" href="#">--}}
-{{--                                         <i class="fas fa-globe mr-1"></i>--}}
-{{--                                         {{ __('Language') }}<i--}}
-{{--                                                 class="icon-chevron-down"></i></a>--}}
-{{--                                     <div class="t-h-dropdown-menu">--}}
-{{--                                         @foreach (DB::table('languages')->whereType('Website')->get() as $language)--}}
-{{--                                             <a class="{{ Session::get('language') == $language->id ? 'active' : ($language->is_default == 1 && !Session::has('language') ? 'active' : '') }}"--}}
-{{--                                                href="{{ route('front.language.setup', $language->id) }}"><i--}}
-{{--                                                         class="icon-chevron-right pr-2"></i>{{ $language->language }}</a>--}}
-{{--                                         @endforeach--}}
-{{--                                     </div>--}}
-{{--                                 </div>--}}
-                                                            <div class="toolbar-item"><a href="{{ route('front.cart') }}"
-                                                                    class="toolbar-cart-link"
-                                                                    title="{{ __('View cart') }}">
-                                                                    <div><span class="cart-icon"><i class="icon-shopping-cart"></i><span
-                                                                                class="count-label cart_count">{{ Session::has('cart') ? count(Session::get('cart')) : '0' }}
-                                                                            </span></span><span class="text-label">{{ __('Cart') }}</span>
-                                                                    </div>
-                                                                </a>
-                                                                <span class="d-none" id="header_cart_load"
-                                                                    data-target="{{ route('front.header.cart') }}"></span>
-                                                                <span class="d-none cart_view_header" aria-hidden="true"></span>
-                                                            </div>
-                                                        </div>
-
-                                                        <!-- Mobile Menu-->
-                                                        <div class="mobile-menu">
-                                                            <!-- Slideable (Mobile) Menu-->
-                                                            <div class="mm-heading-area">
-                                                                <h4>{{ __('Navigation') }}</h4>
-                                                                <div class="toolbar-item visible-on-mobile mobile-menu-toggle mm-t-two">
-                                                                    <a href="#">
-                                                                        <div> <i class="icon-x"></i></div>
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                            <ul class="nav nav-tabs" role="tablist">
-                                                                <li class="nav-item" role="presentation99">
-                                                                    <span class="active" id="mmenu-tab" data-bs-toggle="tab"
-                                                                        data-bs-target="#mmenu" role="tab" aria-controls="mmenu"
-                                                                        aria-selected="true">{{ __('Menu') }}</span>
-                                                                </li>
-                                                                <li class="nav-item" role="presentation99">
-                                                                    <span class="" id="mcat-tab" data-bs-toggle="tab"
-                                                                        data-bs-target="#mcat" role="tab" aria-controls="mcat"
-                                                                        aria-selected="false">{{ __('Category') }}</span>
-                                                                </li>
-
-                                                            </ul>
-                                                            <div class="tab-content p-0">
-                                                                <div class="tab-pane fade show active" id="mmenu" role="tabpanel"
-                                                                    aria-labelledby="mmenu-tab">
-                                                                    <nav class="slideable-menu">
-                                                                        <ul>
-                                                                            <li class="{{ request()->routeIs('front.index') ? 'active' : '' }}"><a
-                                                                                    href="{{ route('front.index') }}"><i
-                                                                                        class="icon-chevron-right"></i>{{ __('Home') }}</a>
-                                                                            </li>
-                                                                            @if ($setting->is_shop == 1)
-                                                                                <li
-                                                                                    class="{{ request()->routeIs('front.catalog*') ? 'active' : '' }}">
-                                                                                    <a href="{{ route('front.catalog') }}"><i
-                                                                                            class="icon-chevron-right"></i>{{ __('Shop') }}</a>
-                                                                                </li>
-                                                                            @endif
-                                                                            @if ($setting->is_campaign == 1)
-                                                                                <li
-                                                                                    class="{{ request()->routeIs('front.campaign') ? 'active' : '' }}">
-                                                                                    <a href="{{ route('front.campaign') }}"><i
-                                                                                            class="icon-chevron-right"></i>{{ __('Campaign') }}</a>
-                                                                                </li>
-                                                                            @endif
-                                                                            @if ($setting->is_brands == 1)
-                                                                                <li
-                                                                                    class="{{ request()->routeIs('front.brand') ? 'active' : '' }}">
-                                                                                    <a href="{{ route('front.brand') }}"><i
-                                                                                            class="icon-chevron-right"></i>{{ __('Brand') }}</a>
-                                                                                </li>
-                                                                            @endif
-
-                                                                            @if ($setting->is_blog == 1)
-                                                                                <li
-                                                                                    class="{{ request()->routeIs('front.blog*') ? 'active' : '' }}">
-                                                                                    <a href="{{ route('front.blog') }}"><i
-                                                                                            class="icon-chevron-right"></i>{{ __('Blog') }}</a>
-                                                                                </li>
-                                                                            @endif
-                                                                            <li class="t-h-dropdown">
-                                                                                <a class="" href="#"><i
-                                                                                        class="icon-chevron-right"></i>{{ __('Pages') }} <i
-                                                                                        class="icon-chevron-down"></i></a>
-                                                                                <div class="t-h-dropdown-menu">
-                                                                                    @if ($setting->is_faq == 1)
-                                                                                        <a class="{{ request()->routeIs('front.faq*') ? 'active' : '' }}"
-                                                                                            href="{{ route('front.faq') }}"><i
-                                                                                                class="icon-chevron-right pr-2"></i>{{ __('Faq') }}</a>
-                                                                                    @endif
-                                                                                    @foreach (DB::table('pages')->wherePos(0)->orwhere('pos', 2)->get() as $page)
-                                                                                        <a class="{{ request()->url() == route('front.page', $page->slug) ? 'active' : '' }} "
-                                                                                            href="{{ route('front.page', $page->slug) }}"><i
-                                                                                                class="icon-chevron-right pr-2"></i>{{ $page->title }}</a>
-                                                                                    @endforeach
-                                                                                </div>
-                                                                            </li>
-
-                                                                            @if ($setting->is_contact == 1)
-                                                                                <li
-                                                                                    class="{{ request()->routeIs('front.contact') ? 'active' : '' }}">
-                                                                                    <a href="{{ route('front.contact') }}"><i
-                                                                                            class="icon-chevron-right"></i>{{ __('Contact') }}</a>
-                                                                                </li>
-                                                                            @endif
-                                                                        </ul>
-                                                                    </nav>
-                                                                </div>
-                                                                <div class="tab-pane fade" id="mcat" role="tabpanel"
-                                                                    aria-labelledby="mcat-tab">
-                                                                    <nav class="slideable-menu">
-                                                                        @include('includes.mobile-category')
-
-                                                                    </nav>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Navbar-->
-                                    <div class="navbar">
-                                        <div class="container">
-                                            <div class="row g-3 w-100 align-items-center">
-                                                {{-- Narrow category column → more room for main nav one line --}}
-                    @if ($setting->is_show_category == 1)
-                        <div class="col-12 col-lg-auto pr-lg-2">
-                            @include('includes.categories')
-                        </div>
-                    @endif
-                    <div class="col-12 col-lg d-flex justify-content-between min-w-0">
-                        <div class="nav-inner">
-                            @include('master.inc.site-menu')
-                        </div>
-                        @php
-                            $free_shipping = DB::table('shipping_services')
-                                ->whereStatus(1)
-                                ->whereIsCondition(1)
-                                ->first();
-                        @endphp
-
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </header>
     <!-- Page Content-->
     @yield('content')
 
@@ -529,7 +183,7 @@ body_theme4 @endif
                 <div class="col-lg-4 col-md-6">
                     <!-- Contact Info-->
                     <section class="widget widget-light-skin">
-                        <h3 class="widget-title">{{ __('Get In Touch') }}</h3>
+                        <h3 class="widget-title">{{ __('GET IN TOUCH') }}</h3>
                         <p class="mb-1"><strong>{{ __('Address') }}: </strong> {{ $setting->footer_address }}</p>
                         <p class="mb-1"><strong>{{ __('Phone') }}: </strong> {{ $setting->footer_phone }}</p>
                         <p class="mb-1"><strong>{{ __('Email') }}: </strong> {{ $setting->footer_email }}</p>
@@ -553,7 +207,7 @@ body_theme4 @endif
                 <div class="col-lg-4 col-sm-6">
                     <!-- Customer Info-->
                     <div class="widget widget-links widget-light-skin">
-                        <h3 class="widget-title">{{ __('Usefull Links') }}</h3>
+                        <h3 class="widget-title">{{ __('USEFUL LINKS') }}</h3>
                         <ul>
                             @if ($setting->is_faq == 1)
                                 <li>
@@ -570,7 +224,7 @@ body_theme4 @endif
                 <div class="col-lg-4">
                     <!-- Subscription-->
                     <section class="widget">
-                        <h3 class="widget-title">{{ __('Newsletter') }}</h3>
+                        <h3 class="widget-title">{{ __('NEWSLETTER') }}</h3>
                         <form class="row subscriber-form" action="{{ route('front.subscriber.submit') }}"
                             method="post">
                             @csrf
@@ -584,6 +238,7 @@ body_theme4 @endif
                                     <input type="hidden" name="b_c7103e2c981361a6639545bd5_1194bb7544"
                                         tabindex="-1">
                                 </div>
+
                             </div>
                             <div class="col-sm-12">
                                 <button class="btn btn-luxury btn-block mt-2" type="submit">
@@ -604,8 +259,8 @@ body_theme4 @endif
             </div>
             <div class="luxury-footer__middle container">
                 <div class="luxury-footer__links">
-                    <a href="/education/guides/engagement-ring-guide">Engagement Rings Guide</a>
-                    <a href="/education/guides/wedding-bands-guide">Wedding Rings Guide</a>
+                    <a href="/education/guides/engagement-ring-guide">Jewellery Guide</a>
+                    <a href="/education/guides/wedding-bands-guide">Lightweight Jewellery Guide</a>
                     <a href="/education/guides/metal-types">Metals</a>
                     <a href="{{ route('education.index') }}">Diamonds Guide</a>
                     <a href="{{ route('education.compliance') }}">{{ __('Trust & compliance') }}</a>
@@ -614,7 +269,7 @@ body_theme4 @endif
                 </div>
             </div>
             <!-- Copyright-->
-            <p class="footer-copyright"> {{ $setting->copy_right }}</p>
+            <p class="footer-copyright">{{ str_ireplace(['Monteluca', 'Montelua'], 'AfricanCarat', $setting->copy_right) }}</p>
         </div>
     </footer>
 
@@ -628,7 +283,7 @@ body_theme4 @endif
             {{ __('Dismiss') }}
         </button>
     </div>
-@include('partials.chatbot')
+
     <!-- Back To Top Button-->
     <a class="scroll-to-top-btn" href="#">
         <i class="icon-chevron-up"></i>

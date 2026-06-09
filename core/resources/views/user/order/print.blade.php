@@ -203,12 +203,6 @@
                                             @if (! empty($item['clarity_grade'] ?? $item['pdp_diamond_clarity'] ?? null))
                                                 <div>{{ __('Diamond clarity') }}: {{ $item['clarity_grade'] ?? $item['pdp_diamond_clarity'] }}</div>
                                             @endif
-                                            @if (! empty($item['selected_shape'] ?? null))
-                                                <div>{{ __('Selected Shape') }}: {{ $item['selected_shape'] }}</div>
-                                            @endif
-                                            @if (! empty($item['selected_carat'] ?? null))
-                                                <div>{{ __('Selected Carat') }}: {{ $item['selected_carat'] }}</div>
-                                            @endif
                                         </td>
                                         <td class="px-0">
                                             {{ $item['qty'] }}
@@ -246,7 +240,26 @@
                                         </td>
                                     </tr>
                                 @endif
-                                @include('includes.order-discount-rows')
+                                @if (json_decode($order->discount, true))
+                                    @php
+                                        $discount = json_decode($order->discount, true);
+                                    @endphp
+                                    <tr>
+                                        <td class="px-0 border-top border-top-2">
+                                            <span class="text-muted">{{ __('Coupon discount') }}
+                                                ({{ $discount['code']['code_name'] }})</span>
+                                        </td>
+                                        <td class="px-0 text-right border-top border-top-2" colspan="5">
+                                            <span class="text-danger">
+                                                @if ($setting->currency_direction == 1)
+                                                    -{{ $order->currency_sign }}{{ round($discount['discount'] * $order->currency_value, 2) }}
+                                                @else
+                                                    -{{ round($discount['discount'] * $order->currency_value, 2) }}{{ $order->currency_sign }}
+                                                @endif
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endif
                                 @if (json_decode($order->shipping, true))
                                     @php
                                         $shipping = json_decode($order->shipping, true);

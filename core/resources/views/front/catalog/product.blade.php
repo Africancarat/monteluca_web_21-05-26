@@ -5,90 +5,20 @@
 @endsection
 
 
-{{--@section('meta')--}}
-{{--    <meta name="tile" content="{{ $item->title }}">--}}
-{{--    <meta name="keywords" content="{{ $item->meta_keywords }}">--}}
-{{--    <meta name="description" content="{{ $item->meta_description }}">--}}
-
-{{--    <meta name="twitter:title" content="{{ $item->title }}">--}}
-{{--    <meta name="twitter:image" content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">--}}
-{{--    <meta name="twitter:description" content="{{ $item->meta_description }}">--}}
-
-{{--    <meta name="og:title" content="{{ $item->title }}">--}}
-{{--    <meta name="og:image" content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">--}}
-{{--    <meta name="og:description" content="{{ $item->meta_description }}">--}}
-{{--     Open Graph--}}
-{{--    <meta property="og:title"--}}
-{{--          content="{{ Str::limit($item->title ?? $item->name,60) }}">--}}
-
-{{--    <meta property="og:description"--}}
-{{--          content="{{ Str::limit(strip_tags($item->meta_description ?? $item->details),150) }}">--}}
-
-{{--    <meta property="og:image"--}}
-{{--          content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">--}}
-
-{{--    <meta property="og:image:secure_url"--}}
-{{--          content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">--}}
-
-{{--    <meta property="og:image:width"--}}
-{{--          content="1200">--}}
-
-{{--    <meta property="og:image:height"--}}
-{{--          content="630">--}}
-
-{{--    <meta property="og:url"--}}
-{{--          content="{{ request()->url() }}">--}}
-
-{{--    <meta property="og:type"--}}
-{{--          content="product">--}}
-{{--@endsection--}}
 @section('meta')
-
-    <meta name="title" content="{{ $item->title ?? $item->name }}">
+    <meta name="tile" content="{{ $item->title }}">
     <meta name="keywords" content="{{ $item->meta_keywords }}">
     <meta name="description" content="{{ $item->meta_description }}">
 
-    {{-- Open Graph --}}
-    <meta property="og:title"
-          content="Monte Luca - {{ $item->name }}">
+    <meta name="twitter:title" content="{{ $item->title }}">
+    <meta name="twitter:image" content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
+    <meta name="twitter:description" content="{{ $item->meta_description }}">
 
-    <meta property="og:image"
-          content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
-
-    <meta property="og:description"
-          content="{{ Str::limit(strip_tags($item->sort_details ?? $item->details), 200) }}">
-
-    <meta property="og:type"
-          content="product">
-
-    <meta property="og:image:secure_url"
-          content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
-
-    <meta property="og:image:width"
-          content="1200">
-
-    <meta property="og:image:height"
-          content="630">
-
-    <meta property="og:image:alt"
-          content="{{ $item->name }}">
-
-    <meta property="og:site_name"
-          content="Monte Luca">
-
-    {{-- Twitter --}}
-    <meta name="twitter:card" content="summary_large_image">
-
-    <meta name="twitter:title"
-          content="Monte Luca - {{ $item->title ?? $item->name }}">
-
-    <meta name="twitter:description"
-          content="{{ Str::limit(strip_tags($item->meta_description ?? $item->details), 200) }}">
-
-    <meta name="twitter:image"
-          content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
-
+    <meta name="og:title" content="{{ $item->title }}">
+    <meta name="og:image" content="{{ \App\Helpers\ImageHelper::storageImageUrl($item->photo) }}">
+    <meta name="og:description" content="{{ $item->meta_description }}">
 @endsection
+
 
 
 @section('content')
@@ -135,11 +65,12 @@
                         'item' => $item,
                         'pdp_slider_images' => $pdp_slider_images ?? [],
                         'pdp_primary_still' => $pdp_primary_still ?? null,
+                        'pdp_metal_images' => $pdp_metal_images ?? [],
+                        'pdp_default_metal' => $pdp_default_metal ?? \App\Services\JewelryPdpMediaService::DEFAULT_METAL_KEY,
+                        'pdp_viewer_meta' => $pdp_viewer_meta ?? [],
+                        'pdp_show_media_gallery' => $pdp_show_media_gallery ?? false,
                     ])
                 </div>
-
-                <p class="text-muted mt-2">{{ $item->sort_details }} <a href="#details"
-                                                                   class="scroll-to">{{ __('Read more') }}</a></p>
 
                 {{-- Desktop: use empty space under media for supporting blocks --}}
                 <div class="d-none d-lg-block mt-3">
@@ -160,17 +91,16 @@
                 <div class="details-page-top-right-content d-flex align-items-start">
                     <div class="div w-100">
                         <input type="hidden" id="item_id" value="{{ $item->id }}">
+                        @php
+                            $pdpLineUnitBase = (float) ($pdp_line_unit_base ?? $item->discount_price);
+                        @endphp
                         <input type="hidden" id="demo_price"
-                            value="{{ PriceHelper::setConvertPrice($item->discount_price) }}">
-                        {{-- Base unit price (same units as items.discount_price); jewelry API overwrites via pdp-jewelry-extras --}}
-                        <input type="hidden" id="pdp_line_base_price" value="{{ (float) $item->discount_price }}">
+                            value="{{ PriceHelper::setConvertPrice($pdpLineUnitBase) }}">
+                        {{-- Base unit price (same units as items.discount_price); jewelry tiers may update via pdp-jewelry-extras --}}
+                        <input type="hidden" id="pdp_line_base_price" value="{{ $pdpLineUnitBase }}">
                         <input type="hidden" value="{{ PriceHelper::setCurrencySign() }}" id="set_currency">
                         <input type="hidden" value="{{ PriceHelper::setCurrencyValue() }}" id="set_currency_val">
-                        <input type="hidden" value="{{ PriceHelper::setCurrencyName() }}" id="pdp_currency_code">
                         <input type="hidden" value="{{ $setting->currency_direction }}" id="currency_direction">
-                        {{-- Jewelry dynamic API (INR base + session currency); filled by pdp-jewelry-extras JS --}}
-                        <input type="hidden" id="pdp_dynamic_price_inr" value="">
-                        <input type="hidden" id="pdp_converted_price" value="">
                         @php
                             $pdpOnWishlist = Auth::check()
                                 && App\Models\Wishlist::where('user_id', Auth::user()->id)
@@ -202,26 +132,16 @@
 
 
                         <div id="add-to-cart" class="pdp-buy-box">
-                        <span class="h3 d-block price-area" id="pdp_price_area"
-                            data-initial-previous="{{ (float) $item->previous_price }}"
-                            data-initial-discount="{{ (float) $item->discount_price }}">
-                            <small id="pdp_compare_price_wrap"
-                                class="d-inline-block @if ($item->previous_price == 0) d-none @endif">
-                                <del id="pdp_compare_price">{{ $item->previous_price != 0 ? PriceHelper::setPreviousPrice($item->previous_price) : '' }}</del>
-                            </small>
-                            <span id="main_price" class="main-price product-price">{{ PriceHelper::grandCurrencyPrice($item) }}</span>
-                            {{-- Keep this element in flow to prevent layout shift while updating price --}}
-                            <small id="pdp_price_loading_msg" class="pdp-price-loading-msg" style="visibility:hidden" aria-live="polite">{{ __('Updating price...') }}</small>
-                        </span>
+                        <p class="text-muted">{{ $item->sort_details }} <a href="#details"
+                                class="scroll-to">{{ __('Read more') }}</a></p>
 
                         @if ($item->diamondAttribute)
                             @php $dq = $item->diamondAttribute; @endphp
                             <div class="diamond-quick-specs mb-3 small">
                                 <div class="d-flex flex-wrap gap-3 text-uppercase letter-spacing"
                                     style="letter-spacing:0.08em;font-size:10px;">
-                                    @php $dqShapeDisplay = $dq->shapeDisplay(); @endphp
-{{--                                    @if($dqShapeDisplay)<span><strong>{{ __('Shape') }}</strong> <span id="pdp_diamond_shape_spec">{{ $dqShapeDisplay }}</span></span>@endif--}}
-{{--                                    @if($dq->carat_weight)<span><strong>{{ __('Carat') }}</strong> {{ $dq->carat_weight }} ct</span>@endif--}}
+                                    @if($dq->shape)<span><strong>{{ __('Shape') }}</strong> {{ $dq->shape }}</span>@endif
+                                    @if($dq->carat_weight)<span><strong>{{ __('Carat') }}</strong> {{ $dq->carat_weight }} ct</span>@endif
                                     @if($dq->cut_grade)<span><strong>{{ __('Cut') }}</strong> {{ $dq->cut_grade }}</span>@endif
 {{--                                    @php--}}
 {{--                                        $dqColor = is_array($dq->color_grade ?? null) ? implode(', ', $dq->color_grade) : ($dq->color_grade ?? null);--}}
@@ -236,6 +156,7 @@
 
                         @include('front.catalog.partials.pdp-jewelry-extras', [
                             'item' => $item,
+                            'pdp_line_unit_base' => $pdpLineUnitBase,
                             'show_pdp_engraving' => $show_pdp_engraving ?? false,
                             'show_emi_estimate' => $show_emi_estimate ?? false,
                             'show_drop_hint' => $show_drop_hint ?? false,
@@ -467,7 +388,7 @@
                                     <table class="spec-table">
                                         <tbody>
                                             @foreach([
-                                                ['Shape', $d->shapeDisplay() ?: null],
+                                                ['Shape', $d->shape],
                                                 ['Carat Weight', filled($d->carat_weight ?? null) ? trim((string) $d->carat_weight).' ct' : null],
                                                 ['Cut', $d->cut_grade],
                                                 ['Colour', is_array($d->color_grade ?? null) ? implode(', ', $d->color_grade) : $d->color_grade],
@@ -487,30 +408,7 @@
                                             ] as [$label, $value])
                                                 @if($value !== null && $value !== '')
                                                     <tr>
-                                                        <td class="spec-label">{{ $label }}@php
-                                                                $verificationUrl = \App\Helpers\CertificationHelper::certificateLink(
-                                                                    $d->certificate_url ?? null,
-                                                                    $d->lab ?? null,
-                                                                    $d->certificate_number ?? null
-                                                                );
-                                                            @endphp
-
-                                                            @if($label === 'Certificate number' && filled($verificationUrl))
-
-                                                                <a href="{{ $verificationUrl }}"
-                                                                   target="_blank"
-                                                                   rel="noopener"
-                                                                   class="text-dark font-weight-bold">
-
-                                                                    {{ $value }}
-
-                                                                </a>
-
-                                                            @else
-
-                                                                {{ $value }}
-
-                                                            @endif</td>
+                                                        <td class="spec-label">{{ $label }}</td>
                                                         <td class="spec-value">
                                                             @if($label === 'Certificate number' && filled($d->certificate_url ?? null))
                                                                 <a href="{{ $d->certificate_url }}" target="_blank" rel="noopener">{{ $value }}</a>
@@ -523,21 +421,6 @@
                                             @endforeach
                                         </tbody>
                                     </table>
-                                    @if(filled($verificationUrl))
-
-                                        <div class="mt-4">
-
-                                            <a href="{{ $verificationUrl }}"
-                                               target="_blank"
-                                               class="btn btn-dark">
-
-                                                Verify Certificate
-
-                                            </a>
-
-                                        </div>
-
-                                    @endif
                                     @if (filled(trim(strip_tags($item->details ?? ''))))
                                         <div class="product-long-description rte-details mt-4">
                                             {!! $item->details !!}
@@ -780,7 +663,7 @@
                                             @if ($related->previous_price != 0)
                                                 <del>{{ PriceHelper::setPreviousPrice($related->previous_price) }}</del>
                                             @endif
-                                            {{ PriceHelper::grandCurrencyPrice($related) }}
+                                            {{ \App\Services\JewelryDynamicPriceService::catalogCurrencyPrice($related) }}
                                         </h4>
                                     </div>
 

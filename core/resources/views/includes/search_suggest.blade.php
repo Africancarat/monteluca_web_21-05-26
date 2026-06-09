@@ -9,7 +9,7 @@
                 {{ Str::limit($item->name, 35) }}
             </a></h3>
             <h4 class="product-price">
-                {{PriceHelper::grandCurrencyPrice($item)}}
+                {{\App\Services\JewelryDynamicPriceService::catalogCurrencyPrice($item)}}
             </h4>
         </div>
     </div>

@@ -5,9 +5,14 @@ namespace App\Models;
 use App\Helpers\ImageHelper;
 use App\Models\Wishlist;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ItemPrice;
 
 class Item extends Model
 {
+    public function itemPrice()
+    {
+        return $this->belongsTo(ItemPrice::class, 'item_price_id');
+    }
     protected static function booted(): void
     {
         static::saving(function (Item $item) {

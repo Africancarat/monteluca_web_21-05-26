@@ -152,10 +152,8 @@
                 if (ev) ev.preventDefault();
                 var input = document.getElementById('diamondShapeInput');
                 if (!input) return;
-                document.querySelectorAll('.diamond-shapes-scroll .diamond-shape-btn').forEach(function (b) {
-                    var active = b.getAttribute('data-shape') === shape;
-                    b.classList.toggle('is-active', active);
-                    b.setAttribute('aria-selected', active ? 'true' : 'false');
+                document.querySelectorAll('.shape-icon-btn').forEach(function (b) {
+                    b.classList.toggle('shape-icon-btn--active', b.getAttribute('data-shape') === shape);
                 });
                 input.value = shape;
                 if (shape === '') {

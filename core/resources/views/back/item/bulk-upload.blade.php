@@ -45,16 +45,7 @@
                                     <label for="file">{{__('Uplaod Your CSV File')}}</label>
                                     <input type="file" accept=".csv,text/csv" class="form-control" name="csv"
                                     id="file"  >
-                                    <small class="text-muted d-block mt-2">
-                                        {{ __('Use') }}
-                                        <a href="{{ route('back.csv.sample') }}">{{ __('Simple Csv Download') }}</a>
-                                        {{ __('for current column headers. JSON columns:') }}
-                                        <code>metal_type</code>,
-                                        <code>gold_karat</code>,
-                                        <code>pdp_metal_variants</code>,
-                                        <code>pdp_shape_variants</code>
-                                        {{ __('(shape + metal galleries, filenames only — not .svg icons).') }}
-                                    </small>
+
                                 </div>
                             </div>
                         </div>

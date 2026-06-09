@@ -184,5 +184,4 @@
             </div>
         </div>
     </div>
-    @include('includes.checkout-guest-login-guard')
 @endsection

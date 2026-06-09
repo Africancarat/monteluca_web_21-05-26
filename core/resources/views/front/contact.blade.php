@@ -112,7 +112,7 @@
                   </div>
                 </div>
                 <input type="text" name="honeypot" id="honeypot" value="" style="display:none;">
-                @if (\App\Support\Recaptcha::isEnabled($setting->recaptcha))
+                @if ($setting->recaptcha == 1)
                 <div class="col-lg-12 mb-4">
                     {!! NoCaptcha::renderJs() !!}
                     {!! NoCaptcha::display() !!}

@@ -77,6 +77,135 @@ $(function ($) {
             $('.topbar .search-box-wrap').toggleClass('d-none');
         });
 
+        // Harry Winston header: search panel
+        $(document).on('click', '.hw-header__search-toggle', function (e) {
+            e.preventDefault();
+            var $panel = $('#hw-header-search');
+            var open = !$panel.hasClass('is-open');
+            $panel.toggleClass('is-open', open).prop('hidden', !open);
+            $('.hw-header__search-toggle').attr('aria-expanded', open ? 'true' : 'false');
+            if (open) {
+                setTimeout(function () {
+                    $panel.find('#__product__search').trigger('focus');
+                }, 50);
+            }
+        });
+
+        // Sticky compact header on scroll (collapse nav row → slim icon bar)
+        (function () {
+            var $hwHeader = $('.site-header--hw');
+            if (!$hwHeader.length) {
+                return;
+            }
+            var scrollThreshold = 48;
+
+            function updateHwHeaderOnScroll() {
+                var scrolled = $(window).scrollTop() > scrollThreshold;
+                $hwHeader.toggleClass('hw-header--scrolled', scrolled);
+                $hwHeader.toggleClass('navbar-stuck', scrolled);
+            }
+
+            $(window).on('scroll.hwHeaderCompact resize.hwHeaderCompact', updateHwHeaderOnScroll);
+            updateHwHeaderOnScroll();
+        })();
+
+        // Mobile drawer: accordion for mega menus + child dropdowns (desktop nav unchanged)
+        (function () {
+            var $hwHeader = $('.site-header--hw');
+            var $drawerNav = $('#hw-mobile-menu');
+            var $mobileMenu = $hwHeader.find('.mobile-menu');
+            var $drawerBackdrop = $hwHeader.find('.hw-drawer-backdrop');
+            var $menuBtn = $hwHeader.find('.hw-header__menu-btn');
+            if (!$drawerNav.length || !$mobileMenu.length) {
+                return;
+            }
+
+            function drawerPanel($toggle) {
+                var id = $toggle.attr('aria-controls');
+                if (id) {
+                    var $byId = $drawerNav.find('#' + id);
+                    if ($byId.length) {
+                        return $byId;
+                    }
+                }
+                return $toggle.closest('li').children('.hw-drawer__panel').first();
+            }
+
+            function setPanelState($panel, open) {
+                if (!$panel.length) {
+                    return;
+                }
+                $panel.toggleClass('is-open', open);
+                if (open) {
+                    $panel.css('max-height', $panel[0].scrollHeight + 'px');
+                } else {
+                    $panel.css('max-height', '0px');
+                }
+            }
+
+            function closeDrawerBranches($exceptLi) {
+                $drawerNav.find('li.is-open').not($exceptLi).each(function () {
+                    var $li = $(this);
+                    $li.removeClass('is-open');
+                    $li.find('> .hw-drawer__row .hw-drawer__toggle').attr('aria-expanded', 'false');
+                    setPanelState($li.children('.hw-drawer__panel'), false);
+                });
+            }
+
+            function syncDrawerChrome() {
+                var isOpen = $mobileMenu.hasClass('open');
+                $menuBtn.attr('aria-expanded', isOpen ? 'true' : 'false');
+                $mobileMenu.attr('aria-hidden', isOpen ? 'false' : 'true');
+                $drawerBackdrop.toggleClass('is-visible', isOpen);
+                $hwHeader.find('.mobile-menu-toggle').toggleClass('active', isOpen);
+                $('body').toggleClass('hw-drawer-open', isOpen);
+                if (!isOpen) {
+                    closeDrawerBranches(null);
+                }
+            }
+
+            $drawerNav.on('click.hwDrawer', '.hw-drawer__toggle', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var $btn = $(this);
+                var $li = $btn.closest('li');
+                var $panel = drawerPanel($btn);
+                if (!$panel.length) {
+                    return;
+                }
+                var willOpen = !$li.hasClass('is-open');
+                closeDrawerBranches(willOpen ? $li : null);
+                $li.toggleClass('is-open', willOpen);
+                $btn.attr('aria-expanded', willOpen ? 'true' : 'false');
+                setPanelState($panel, willOpen);
+                if (willOpen) {
+                    window.setTimeout(function () {
+                        if ($li.hasClass('is-open')) {
+                            $panel.css('max-height', $panel[0].scrollHeight + 'px');
+                        }
+                    }, 80);
+                }
+            });
+
+            $(document).on('click.hwDrawer', '.site-header--hw .mobile-menu-toggle', function () {
+                window.setTimeout(syncDrawerChrome, 0);
+            });
+
+            $(window).on('resize.hwDrawer', function () {
+                $drawerNav.find('li.is-open > .hw-drawer__panel.is-open').each(function () {
+                    this.style.maxHeight = this.scrollHeight + 'px';
+                });
+            });
+
+            $(document).on('keydown.hwDrawer', function (e) {
+                if (e.key === 'Escape' && $mobileMenu.hasClass('open')) {
+                    $hwHeader.find('.mobile-menu-toggle').first().trigger('click');
+                }
+            });
+
+            $drawerNav.find('.hw-drawer__panel').css('max-height', '0px');
+            syncDrawerChrome();
+        })();
 
         // Flash Deal Area Start
         var $hero_slider_main = $(".hero-slider-main");
@@ -369,26 +498,6 @@ $(function ($) {
             },
         });
 
-        var $completeTheLookSlider = $(".complete-the-look-slider");
-        if ($completeTheLookSlider.length) {
-            $completeTheLookSlider.owlCarousel({
-                nav: false,
-                dots: true,
-                autoplayTimeout: 6000,
-                smartSpeed: 1200,
-                margin: 15,
-                thumbs: false,
-                responsive: {
-                    0: { items: 2 },
-                    576: { items: 2 },
-                    768: { items: 3 },
-                    992: { items: 4 },
-                    1200: { items: 4 },
-                    1400: { items: 5 }
-                },
-            });
-        }
-
         // Blog Details Slider Area Start
         var $hero_slider_main = $(".blog-details-slider");
         $hero_slider_main.owlCarousel({
@@ -600,10 +709,10 @@ $(function ($) {
 
 
 
-        $(document).on('click', '.list-view', function () {
+        $(document).on('click', '.shop-view > a', function () {
             let viewCheck = $(this).attr('data-step');
             let check = $(this);
-            $('.list-view').removeClass('active');
+            $('.shop-view > a').removeClass('active');
             $('#search_form #view_check').val(viewCheck);
             $("#search_button").click();
             check.addClass('active');
@@ -1084,17 +1193,10 @@ $(function ($) {
                 var gk = document.getElementById('pdp_selected_gold_karat');
                 var dc = document.getElementById('pdp_selected_diamond_color');
                 var dcl = document.getElementById('pdp_selected_diamond_clarity');
-                var cw = document.getElementById('pdp_selected_carat_weight');
-                var ss = document.getElementById('pdp_selected_diamond_shape');
                 if (mt && mt.value && String(mt.value).trim()) jewelryCartParams += '&metal_type=' + encodeURIComponent(String(mt.value).trim());
                 if (gk && gk.value && String(gk.value).trim()) jewelryCartParams += '&gold_karat=' + encodeURIComponent(String(gk.value).trim());
                 if (dc && dc.value && String(dc.value).trim()) jewelryCartParams += '&color_grade=' + encodeURIComponent(String(dc.value).trim());
                 if (dcl && dcl.value && String(dcl.value).trim()) jewelryCartParams += '&clarity_grade=' + encodeURIComponent(String(dcl.value).trim());
-                if (cw && cw.value && String(cw.value).trim()) {
-                    jewelryCartParams += '&pdp_carat_weight=' + encodeURIComponent(String(cw.value).trim());
-                    jewelryCartParams += '&selected_carat=' + encodeURIComponent(String(cw.value).trim());
-                }
-                if (ss && ss.value && String(ss.value).trim()) jewelryCartParams += '&selected_shape=' + encodeURIComponent(String(ss.value).trim());
                 let lineBaseParam = '';
                 var lbEl = typeof document !== 'undefined' ? document.getElementById('pdp_line_base_price') : null;
                 if (lbEl && lbEl.value !== undefined && lbEl.value !== null && String(lbEl.value).trim() !== '') {
@@ -1222,14 +1324,6 @@ $(document).on('change', '#state_id_select', function () {
     $.get(url, function (response) {
         $('.set__state_price_tr').removeClass('d-none');
         $('.set__state_price').text(response.state_price);
-        if (response.cgst_amount !== undefined) {
-            $('.cgst-row').removeClass('d-none');
-            $('.cgst-amount').text(response.cgst_amount);
-        }
-        if (response.sgst_amount !== undefined) {
-            $('.sgst-row').removeClass('d-none');
-            $('.sgst-amount').text(response.sgst_amount);
-        }
         $('.grand_total_set').text(response.grand_total);
         $('.state_id_setup').val(state_id);
         $(".state_message").addClass('d-none');
@@ -1245,14 +1339,6 @@ $(document).on('change', '#shipping_id_select', function () {
     $.get(url, function (response) {
         $('.set__shipping_price_tr').removeClass('d-none');
         $('.set__shipping_price').text(response.shipping_price);
-        if (response.cgst_amount !== undefined) {
-            $('.cgst-row').removeClass('d-none');
-            $('.cgst-amount').text(response.cgst_amount);
-        }
-        if (response.sgst_amount !== undefined) {
-            $('.sgst-row').removeClass('d-none');
-            $('.sgst-amount').text(response.sgst_amount);
-        }
         $('.grand_total_set').text(response.grand_total);
         $('.shipping_id_setup').val(shipping_id);
         $(".shipping_message").addClass('d-none');

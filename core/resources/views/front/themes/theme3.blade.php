@@ -9,18 +9,11 @@
 
    
 
-    @if ($extra_settings->is_t3_slider == 1)
-        @php
-            $hero = $sliders->first();
-            $heroVideo = ($hero && $hero->link && preg_match('/\.(mp4|webm)(\?|#|$)/i', trim((string) $hero->link))) ? trim((string) $hero->link) : null;
-        @endphp
-        @include('components.luxury-hero', [
-            'heroImage' => $hero ? \App\Helpers\ImageHelper::storageImageUrl($hero->photo) : asset('images/hero-diamond.jpg'),
-            'heroVideo' => $heroVideo,
-            'title' => $hero ? e($hero->title) . '<br><span class="fs-5 fw-light">' . e($hero->details) . '</span>' : null,
-            'primaryLink' => route('diamonds.index'),
-            'primaryLabel' => __('Explore diamonds'),
-        ])
+    @php
+        $hasHomeHeroVideo = is_file(public_path('storage/images/African_Carat_Ads_3.mp4'));
+    @endphp
+    @if ($extra_settings->is_t3_slider == 1 || $hasHomeHeroVideo)
+        @include('components.home-luxury-hero')
     @endif
 
     @if ($extra_settings->is_t3_service_section == 1)
@@ -30,7 +23,7 @@
                     @foreach ($services as $service)
                         <div class="col-lg-3 col-sm-6 text-center mb-30">
                             <div class="single-service single-service2">
-                                <img src="{{ url('/core/public/storage/images/'.$service->photo) }}" alt="Shipping">
+                                <img src="{{ \App\Helpers\HomePageImageHelper::serviceUrl($service->photo, $loop->index) }}" alt="{{ $service->title }}">
                                 <div class="content">
                                     <h6 class="mb-2">{{ $service->title }}</h6>
                                     <p class="text-sm text-muted mb-0">{{ $service->details }}</p>
@@ -49,35 +42,37 @@
 
     @php
         $sb = $split_path_banner ?? [];
-        $showSplitBanner = ($extra_settings->is_t3_split_path_banner ?? 0) == 1
-            && (
-                ($sb['headline'] ?? '') !== '' || ($sb['kicker'] ?? '') !== '' || ($sb['body'] ?? '') !== ''
-                || ($sb['fg_image'] ?? '') !== '' || ($sb['bg_image'] ?? '') !== ''
-                || ($sb['btn1_label'] ?? '') !== '' || ($sb['btn2_label'] ?? '') !== ''
-            );
+        $hasAfricanCaratEngagementImage = is_file(public_path('storage/images/African carat/2.png'));
+        $showSplitBanner = $hasAfricanCaratEngagementImage
+            || (($extra_settings->is_t3_split_path_banner ?? 0) == 1
+                && (
+                    ($sb['headline'] ?? '') !== '' || ($sb['kicker'] ?? '') !== '' || ($sb['body'] ?? '') !== ''
+                    || ($sb['fg_image'] ?? '') !== '' || ($sb['bg_image'] ?? '') !== ''
+                    || ($sb['btn1_label'] ?? '') !== '' || ($sb['btn2_label'] ?? '') !== ''
+                ));
     @endphp
     @if ($showSplitBanner)
         @include('front.partials.home-split-path-banner', ['split' => $sb])
     @endif
 
-    <section class="custom-trust">
+<section class="custom-trust">
         <div class="container">
             <h2 class="trust-heading">{{ __('Trusted by private clients across global markets.') }}</h2>
             <div class="trust-grid">
                 <div class="trust-item">
-                    <img class="trust-photo" src="{{ url('/core/public/storage/images/trust-certificate.png') }}" alt="{{ __('IGI Certified') }}" loading="lazy">
+                    <img class="trust-photo trust-photo--igi" src="{{ \App\Helpers\HomePageImageHelper::trustUrl('igi') }}" alt="{{ __('IGI Certified') }}" loading="lazy">
                     <p>{{ __('IGI Certified') }}</p>
                 </div>
                 <div class="trust-item">
-                    <img class="trust-photo" src="{{ url('/core/public/storage/images/trust-lock.png') }}" alt="{{ __('Secure Checkout') }}" loading="lazy">
+                    <img class="trust-photo trust-photo--checkout" src="{{ \App\Helpers\HomePageImageHelper::trustUrl('checkout') }}" alt="{{ __('Secure Checkout') }}" loading="lazy">
                     <p>{{ __('Secure Checkout') }}</p>
                 </div>
                 <div class="trust-item">
-                    <img class="trust-photo" src="{{ url('/core/public/storage/images/trust-globe.png') }}" alt="{{ __('Global Delivery') }}" loading="lazy">
+                    <img class="trust-photo trust-photo--large" src="{{ \App\Helpers\HomePageImageHelper::trustUrl('delivery') }}" alt="{{ __('Global Delivery') }}" loading="lazy">
                     <p>{{ __('Global Delivery') }}</p>
                 </div>
                 <div class="trust-item">
-                    <img class="trust-photo" src="{{ url('/core/public/storage/images/trust-consultation.png') }}" alt="{{ __('Private Consultation Available') }}" loading="lazy">
+                    <img class="trust-photo trust-photo--large" src="{{ \App\Helpers\HomePageImageHelper::trustUrl('consultation') }}" alt="{{ __('Private Consultation Available') }}" loading="lazy">
                     <p>{{ __('Private Consultation Available') }}</p>
                 </div>
             </div>
@@ -105,7 +100,7 @@
                                 <a href="{{ route('front.product', $item->slug) }}" class="luxury-trending-pick-card__thumb-wrap">
                                     <span class="luxury-trending-pick-card__badge">{{ __('New') }}</span>
                                     <img class="luxury-trending-pick-card__thumb"
-                                         src="{{ \App\Helpers\ImageHelper::storageImageUrl($item->thumbnail ?: $item->photo) }}"
+                                         src="{{ \App\Helpers\HomePageImageHelper::trendingPickUrl($item->thumbnail ?: $item->photo, $loop->index) }}"
                                          alt="{{ $item->name }}"
                                          loading="lazy">
                                 </a>
@@ -151,7 +146,7 @@
 
     @if ($extra_settings->is_t3_pecialpick == 1)
         @php
-            $inspectionImage = url('/core/public/storage/images/diamond-inspection.png');
+            $inspectionImage = \App\Helpers\HomePageImageHelper::inspectionUrl();
         @endphp
         <section class="luxury-inspection-section">
             <div class="container">
@@ -179,61 +174,61 @@
                         'slug' => 'emerald',
                         'title' => __('Emerald Diamond'),
                         'desc' => __('Classic rectangular cut with step facets and long clean lines'),
-                        'image' => url('/core/public/storage/images/emerald.png'),
+                        'image' => \App\Helpers\HomePageImageHelper::diamondShapeUrl('emerald'),
                     ],
                     [
                         'slug' => 'asscher',
                         'title' => __('Asscher Diamond'),
                         'desc' => __('Vintage-style square shape with cropped corners'),
-                        'image' => url('/core/public/storage/images/asscher.png'),
+                        'image' => \App\Helpers\HomePageImageHelper::diamondShapeUrl('asscher'),
                     ],
                     [
                         'slug' => 'oval',
                         'title' => __('Oval Diamond'),
                         'desc' => __('Elongated brilliance that flatters the finger beautifully'),
-                        'image' => url('/core/public/storage/images/oval.png'),
+                        'image' => \App\Helpers\HomePageImageHelper::diamondShapeUrl('oval'),
                     ],
                     [
                         'slug' => 'round',
                         'title' => __('Round Diamond'),
                         'desc' => __('The timeless brilliant cut with maximum sparkle'),
-                        'image' => url('/core/public/storage/images/round.png'),
+                        'image' => \App\Helpers\HomePageImageHelper::diamondShapeUrl('round'),
                     ],
                     [
                         'slug' => 'cushion',
                         'title' => __('Cushion Diamond'),
                         'desc' => __('Soft rounded corners with a romantic pillow-like silhouette'),
-                        'image' => url('/core/public/storage/images/cushion.png'),
+                        'image' => \App\Helpers\HomePageImageHelper::diamondShapeUrl('cushion'),
                     ],
                     [
                         'slug' => 'heart',
                         'title' => __('Heart Diamond'),
                         'desc' => __('Symbolic and expressive shape with bold fire'),
-                        'image' => url('/core/public/storage/images/heart.png'),
+                        'image' => \App\Helpers\HomePageImageHelper::diamondShapeUrl('heart'),
                     ],
                     [
                         'slug' => 'marquise',
                         'title' => __('Marquise Diamond'),
                         'desc' => __('Long, narrow surface makes it appear larger than life'),
-                        'image' => url('/core/public/storage/images/marquise.png'),
+                        'image' => \App\Helpers\HomePageImageHelper::diamondShapeUrl('marquise'),
                     ],
                     [
                         'slug' => 'pear',
                         'title' => __('Pear Diamond'),
                         'desc' => __('A graceful blend of round brilliance and marquise elegance'),
-                        'image' => url('/core/public/storage/images/pear.png'),
+                        'image' => \App\Helpers\HomePageImageHelper::diamondShapeUrl('pear'),
                     ],
                     [
                         'slug' => 'princess',
                         'title' => __('Princess Diamond'),
                         'desc' => __('Modern square cut with bright, sharp scintillation'),
-                        'image' => url('/core/public/storage/images/princess.png'),
+                        'image' => \App\Helpers\HomePageImageHelper::diamondShapeUrl('princess'),
                     ],
                     [
                         'slug' => 'radiant',
                         'title' => __('Radiant Diamond'),
                         'desc' => __('Crisp trimmed corners with lively brilliant faceting'),
-                        'image' => url('/core/public/storage/images/radiant.png'),
+                        'image' => \App\Helpers\HomePageImageHelper::diamondShapeUrl('radiant'),
                     ],
                 ];
                 $initialSlide = 0;
@@ -285,7 +280,7 @@
                     'desc' => __("The ultimate symbol of lifelong commitment, eternity rings make for an ideal wedding or anniversary ring, or can be worn alongside your engagement ring."),
                     'cta' => __("Explore"),
                     'url' => route('front.catalog'),
-                    'image' => url('/core/public/storage/images/crowning-eternity-rings.jpg'),
+                    'image' => \App\Helpers\HomePageImageHelper::crowningUrl('eternity'),
                     'watermark' => 'find your sparkle',
                 ],
                 [
@@ -293,7 +288,8 @@
                     'desc' => __("Kissed by the colors of nature, sapphire, ruby, emerald, and moissanite jewelry makes for a stunningly exotic look."),
                     'cta' => __("Browse"),
                     'url' => route('front.catalog'),
-                    'image' => url('/core/public/storage/images/crowning-gemstone-jewelry.jpg'),
+                    'image' => \App\Helpers\HomePageImageHelper::crowningUrl('gemstone'),
+                    'video' => \App\Helpers\HomePageImageHelper::crowningVideoUrl('gemstone'),
                     'watermark' => 'gemstone collection',
                 ],
                 [
@@ -301,7 +297,7 @@
                     'desc' => __("From timeless to modern, choose a wedding ring in a traditional, classic, rugged carved, elegant diamond, or funky alternative metal."),
                     'cta' => __("Discover"),
                     'url' => route('front.catalog'),
-                    'image' => url('/core/public/storage/images/crowning-mens-wedding-rings.jpg'),
+                    'image' => \App\Helpers\HomePageImageHelper::crowningUrl('mens_wedding'),
                     'watermark' => "men's wedding rings",
                 ],
                 [
@@ -309,7 +305,8 @@
                     'desc' => __("The perfect gift for any occasion, these handcrafted preset diamond studs make a bold yet elegant statement."),
                     'cta' => __("Browse"),
                     'url' => route('front.catalog'),
-                    'image' => url('/core/public/storage/images/crowning-diamond-studs.jpg'),
+                    'image' => \App\Helpers\HomePageImageHelper::crowningUrl('studs'),
+                    'video' => \App\Helpers\HomePageImageHelper::crowningVideoUrl('studs'),
                     'watermark' => 'diamond studs',
                 ],
             ];
@@ -326,7 +323,20 @@
                     <article class="luxury-crowning-jewels__row{{ $idx % 2 === 1 ? ' is-right' : ' is-left' }}">
                         <span class="luxury-crowning-jewels__watermark" aria-hidden="true">{{ $block['watermark'] }}</span>
                         <div class="luxury-crowning-jewels__media">
-                            <img src="{{ $block['image'] }}" alt="{{ $block['title'] }}" loading="lazy">
+                            @if (!empty($block['video']))
+                                <video class="luxury-crowning-jewels__video"
+                                    autoplay
+                                    muted
+                                    loop
+                                    playsinline
+                                    preload="metadata"
+                                    poster="{{ $block['image'] }}"
+                                    aria-label="{{ $block['title'] }}">
+                                    <source src="{{ $block['video'] }}" type="video/mp4">
+                                </video>
+                            @else
+                                <img src="{{ $block['image'] }}" alt="{{ $block['title'] }}" loading="lazy">
+                            @endif
                         </div>
                         <div class="luxury-crowning-jewels__panel">
                             <h3>{{ $block['title'] }}</h3>
@@ -406,7 +416,7 @@
                                                 @if($item->previous_price && $item->previous_price !=0)
                                                 <div class="product-badge product-badge2 bg-info"> -{{PriceHelper::DiscountPercentage($item)}}</div>
                                                 @endif
-                                                <img class="lazy" src="{{ \App\Helpers\ImageHelper::storageImageUrl($item->thumbnail ?: $item->photo) }}" data-src="{{ \App\Helpers\ImageHelper::storageImageUrl($item->thumbnail ?: $item->photo) }}" alt="Product">
+                                                <img class="lazy" data-src="{{url('/core/public/storage/images/'.$item->thumbnail)}}" alt="Product">
                                                 <div class="product-button-group"><a class="product-button wishlist_store" href="{{route('user.wishlist.store',$item->id)}}" title="{{__('Wishlist')}}"><i class="icon-heart"></i></a>
                                                     @include('includes.item_footer',['sitem' => $item])
                                                 </div>
@@ -456,7 +466,6 @@
         $listRaw = trim((string) (($s2['bullet_points'] ?? '') !== '' ? $s2['bullet_points'] : (($s2['title2'] ?? '') !== '' ? $s2['title2'] : ($s2['subtitle3'] ?? ''))));
         $ctaLabel = trim((string) (($s2['button_label'] ?? '') !== '' ? $s2['button_label'] : ($s2['title3'] ?? '')));
         $ctaUrl = trim((string) (($s2['button_url'] ?? '') !== '' ? $s2['button_url'] : ($s2['url1'] ?? '')));
-        $rightImage = trim((string) (($s2['image'] ?? '') !== '' ? $s2['image'] : ($s2['img1'] ?? '')));
 
         if ($crumb === '') $crumb = __('Home / Collections /');
         if ($heading === '') $heading = __('Real Diamonds. Reimagined.');
@@ -473,6 +482,8 @@
                 __('Lower legacy inefficiency'),
             ];
         }
+
+        $reimaginedHero = \App\Helpers\HomePageImageHelper::reimaginedBannerUrl();
     @endphp
     <section class="luxury-reimagined-banner">
         <div class="container">
@@ -489,9 +500,7 @@
                     <a href="{{ $ctaUrl }}" class="btn btn-luxury">{{ $ctaLabel }}</a>
                 </div>
                 <div class="luxury-reimagined-banner__media">
-                    @if ($rightImage !== '')
-                        <img src="{{ url('/core/public/storage/images/' . ltrim($rightImage, '/')) }}" alt="{{ $heading }}" loading="lazy">
-                    @endif
+                    <img src="{{ $reimaginedHero }}" alt="{{ $heading }}" loading="lazy">
                 </div>
             </div>
         </div>
@@ -534,7 +543,7 @@
                                         @if($popular_category_item->previous_price && $popular_category_item->previous_price !=0)
                                         <div class="product-badge product-badge2 bg-info"> -{{PriceHelper::DiscountPercentage($popular_category_item)}}</div>
                                         @endif
-                                            <img class="lazy" src="{{ \App\Helpers\ImageHelper::storageImageUrl($popular_category_item->thumbnail ?: $popular_category_item->photo) }}" data-src="{{ \App\Helpers\ImageHelper::storageImageUrl($popular_category_item->thumbnail ?: $popular_category_item->photo) }}" alt="Product">
+                                            <img class="lazy" data-src="{{url('/core/public/storage/images/'.$popular_category_item->thumbnail)}}" alt="Product">
                                         <div class="product-button-group"><a class="product-button wishlist_store" href="{{route('user.wishlist.store',$popular_category_item->id)}}" title="{{__('Wishlist')}}"><i class="icon-heart"></i></a>
 
                                         @include('includes.item_footer',['sitem' => $popular_category_item])
@@ -589,7 +598,7 @@
                                                 ">{{__('out of stock')}}</div>
                                                 @endif
 
-                                            <img class="lazy" src="{{ \App\Helpers\ImageHelper::storageImageUrl($two_column_category_item->thumbnail ?: $two_column_category_item->photo) }}" data-src="{{ \App\Helpers\ImageHelper::storageImageUrl($two_column_category_item->thumbnail ?: $two_column_category_item->photo) }}" alt="Product"></a>
+                                            <img class="lazy" data-src="{{url('/core/public/storage/images/'.$two_column_category_item->thumbnail)}}" alt="Product"></a>
                                         <div class="product-card-body">
                                             <h3 class="product-title"><a href="{{route('front.product',$two_column_category_item->slug)}}">
                                                 {{ Str::limit($two_column_category_item->name,40) }}
@@ -626,7 +635,7 @@
             <div class="row gx-3">
                 <div class="col-md-6">
                     <a href="{{$banner_third['url1']}}" class="genius-banner">
-                        <img class="lazy" data-src="{{ url('/core/public/storage/images/'.$banner_third['img1']) }}" alt="">
+                        <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::resolveFromAdmin($banner_third['img1'] ?? '', config('home_page_images.banner_third.1', [])) }}" alt="{{ $banner_third['title1'] ?? '' }}">
                         <div class="inner-content">
                             @if (isset($banner_third['subtitle1']))
                                 <p>{{$banner_third['subtitle1']}}</p>
@@ -639,7 +648,7 @@
                 </div>
                 <div class="col-md-6">
                     <a href="{{$banner_third['url2']}}" class="genius-banner">
-                        <img class="lazy" data-src="{{ url('/core/public/storage/images/'.$banner_third['img2']) }}" alt="">
+                        <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::resolveFromAdmin($banner_third['img2'] ?? '', config('home_page_images.banner_third.2', [])) }}" alt="{{ $banner_third['title2'] ?? '' }}">
                         <div class="inner-content">
                             @if (isset($banner_third['subtitle2']))
                                 <p>{{$banner_third['subtitle2']}} </p>
@@ -672,8 +681,8 @@
                                 <div class="slider-item">
                                     <a href="{{route('front.blog.details',$post->slug)}}" class="blog-post">
                                         <div class="post-thumb">
-                                            <img class="lazy" data-src="{{ url('/core/public/storage/images/' . json_decode($post->photo, true)[array_key_first(json_decode($post->photo, true))]) }}"
-                                                alt="Blog Post">
+                                            <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::blogPostUrl($post->photo) }}"
+                                                alt="{{ $post->title }}">
                                             </div>
                                         <div class="post-body">
 
@@ -714,7 +723,7 @@
                             <div class="slider-item">
                                 <a class="text-center" href="{{ route('front.catalog') . '?brand=' . $brand->slug }}">
                                     <img class="d-block hi-50 lazy"
-                                    data-src="{{ url('/core/public/storage/images/' . $brand->photo) }}"
+                                    data-src="{{ \App\Helpers\HomePageImageHelper::brandUrl($brand->photo) }}"
                                         alt="{{ $brand->name }}" title="{{ $brand->name }}">
                                 </a>
                             </div>

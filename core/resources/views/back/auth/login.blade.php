@@ -14,18 +14,13 @@
                         @include('alerts.alerts')
 
                         <div class="form-group form-floating-label emailNotRTL">
-                            <input id="username" name="login_email" type="email" class="form-control input-border-bottom @error('login_email') is-invalid @enderror" value="{{ old('login_email') }}" required autocomplete="email">
+                            <input id="username" name="login_email" type="email" class="form-control input-border-bottom" value="{{ old('login_email') }}">
                             <label for="username" class="placeholder">{{ __('Email Address') }}</label>
-                            @error('login_email')
-                                <p class="text-danger small mb-0 mt-1">{{ $message }}</p>
-                            @enderror
                         </div>
                         <div class="form-group form-floating-label rtlinput">
-                            <input id="password" name="login_password" type="password" class="form-control input-border-bottom @error('login_password') is-invalid @enderror" required autocomplete="current-password">
+                            <input id="password" name="login_password" type="password" class="form-control input-border-bottom">
                             <label for="password" class="placeholder">{{ __('Password') }}</label>
-                            @error('login_password')
-                                <p class="text-danger small mb-0 mt-1">{{ $message }}</p>
-                            @enderror
+                            
                         </div>
 
                         <div class="row justify-content-center form-sub m-0">

@@ -30,7 +30,7 @@
     $metalOptions = Item::PDP_METAL_IMAGE_OPTIONS;
 @endphp
 
-<div class="card mt-3" id="pdp_shape_metal_images_card">
+<div class="card" id="pdp_shape_metal_images_card">
     <div class="card-body">
         {{-- Signals repository to process shape×metal uploads on save (see ItemRepository::persistPdpShapeVariants). --}}
         <input type="hidden" name="pdp_shape_matrix" value="1">
@@ -59,7 +59,7 @@
                             $metalKey = Item::pdpMetalLabelToFormKey($metalLabel);
                             $existing = $existingByCombo[$formShape][$metalKey] ?? [];
                         @endphp
-                        <div class="col-md-6 col-lg-3 mb-3">
+                        <div class="col-6 col-md-4 col-lg-3 col-xl-2 mb-3">
                             <label class="d-block font-weight-bold small mb-2">{{ $metalLabel }}</label>
                             @if ($existing !== [])
                                 <div class="d-flex flex-wrap mb-2">

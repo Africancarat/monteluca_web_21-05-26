@@ -160,30 +160,53 @@
         </div>
     </div>
 @else
-    {{-- Main first in DOM (mobile: image on top); desktop SCSS uses row-reverse so thumbs sit on the left --}}
-    <div class="lux-pdp-gallery-layout pdp-gallery-layout">
-        <div class="pdp-gallery-main lux-pdp-gallery-main">
+    @include('front.catalog.partials.pdp-media-stage', [
+        'item' => $item,
+        'pdp_metal_images' => $pdp_metal_images ?? [],
+        'pdp_default_metal' => $pdp_default_metal ?? \App\Services\JewelryPdpMediaService::DEFAULT_METAL_KEY,
+        'pdp_viewer_meta' => $pdp_viewer_meta ?? [],
+        'pdp_show_media_gallery' => $pdp_show_media_gallery ?? false,
+        'pdp_primary_still' => $pdp_primary_still ?? null,
+        'pdp_slider_images' => $pdp_slider_images ?? [],
+    ])
+
+    @php
+        $pdpIjMediaActive = ! empty($pdp_show_media_gallery);
+        $pdpOwlImages = \App\Services\JewelryPdpMediaService::sanitizeUrlList($pdp_slider_images ?? []);
+    @endphp
+
+    {{-- Owl carousel: synced by PdpMedia when iJewel gallery active; hidden visually to avoid duplicate thumbs/main --}}
+    <div class="lux-pdp-gallery-layout pdp-gallery-layout {{ $pdpIjMediaActive ? 'pdp-gallery-layout--ij-primary' : '' }}">
+        <div class="pdp-gallery-main lux-pdp-gallery-main" id="pdpOwlGalleryHost">
             <div class="image-gallery lux-pdp-gallery" id="productGallery" data-lux-gallery>
                 <div class="product-thumbnails insize">
                     <div class="product-details-slider owl-carousel">
-                        @foreach ($pdp_slider_images ?? [] as $sliderSrc)
+                        @forelse ($pdpOwlImages as $sliderSrc)
                             <div class="item">
                                 <div class="lux-zoom-wrap" data-lux-zoom>
-                                    <img src="{{ $sliderSrc }}" loading="lazy" alt="{{ $item->name }}" class="lux-main-img">
+                                    <img src="{{ $sliderSrc }}" loading="lazy" alt="" class="lux-main-img">
                                 </div>
                             </div>
-                        @endforeach
+                        @empty
+                            <div class="item">
+                                <div class="lux-zoom-wrap" data-lux-zoom>
+                                    <img src="{{ \App\Services\JewelryPdpMediaService::placeholderImageUrl() }}" loading="lazy" alt="" class="lux-main-img">
+                                </div>
+                            </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
         </div>
-        <div class="gallery-thumbs lux-pdp-thumbs lux-pdp-thumbs--rail" data-lux-thumbs>
-            @foreach ($pdp_slider_images ?? [] as $sliderSrc)
-                <button type="button" class="lux-thumb" data-lux-thumb>
-                    <img src="{{ $sliderSrc }}" class="gallery-thumb" loading="lazy" alt="">
-                </button>
-            @endforeach
-        </div>
+        @unless ($pdpIjMediaActive)
+            <div class="gallery-thumbs lux-pdp-thumbs lux-pdp-thumbs--rail" data-lux-thumbs>
+                @foreach ($pdpOwlImages as $sliderSrc)
+                    <button type="button" class="lux-thumb" data-lux-thumb>
+                        <img src="{{ $sliderSrc }}" class="gallery-thumb" loading="lazy" alt="" decoding="async">
+                    </button>
+                @endforeach
+            </div>
+        @endunless
     </div>
 @endif
 
@@ -236,6 +259,115 @@
 
         @media (max-width: 576px){
             .lux-thumb img{ width:56px; height:56px; }
+        }
+
+        /* iJewel primary media: single stage + horizontal metal strip */
+        .pdp-product-media--ij-active{ display: block; width: 100%; }
+        .ij-pdp-media-stage{
+            position: relative;
+            min-height: 320px;
+            padding: 1rem;
+            background: #fff;
+            border: 1px solid rgba(0,0,0,.08);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .pdp-media-stage__img-wrap{
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            background: #fff;
+            text-align: center;
+        }
+        .pdp-media-stage__img{
+            display: block;
+            max-width: 100%;
+            max-height: 520px;
+            width: auto;
+            height: auto;
+            margin: 0 auto;
+            object-fit: contain;
+        }
+        .pdp-media-viewer{ position: relative; z-index: 1; }
+        .pdp-media-viewer__iframe{ display: block; width: 100%; height: 100%; border: 0; }
+        .pdp-metal-gallery{ margin-top: 1rem; clear: both; }
+        .pdp-metal-thumbs{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: stretch;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 4px 2px 8px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .pdp-media-thumb{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            width: 88px;
+            height: 88px;
+            margin: 0;
+            padding: 4px;
+            border: 2px solid rgba(0,0,0,.12);
+            background: #fff;
+            border-radius: 10px;
+            cursor: pointer;
+            vertical-align: top;
+            transition: border-color .16s ease, box-shadow .16s ease;
+        }
+        .pdp-media-thumb.is-active{
+            border-color: rgba(184,134,11,.95);
+            box-shadow: 0 0 0 2px rgba(184,134,11,.25);
+        }
+        .pdp-media-thumb__img{
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        .pdp-media-thumb__viewer-inner{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background: #f8fafc;
+            color: #334155;
+            border-radius: 6px;
+        }
+        .pdp-media-thumb__icon{ width: 26px; height: 26px; flex-shrink: 0; }
+        .pdp-media-thumb__badge{ font-size: 10px; font-weight: 700; letter-spacing: .08em; line-height: 1; }
+        .pdp-media-empty,
+        .pdp-media-fallback{
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Hide legacy vertical rail + duplicate owl hero when iJewel strip is active */
+        .pdp-gallery-layout--ij-primary .lux-pdp-thumbs--rail{ display: none !important; }
+        .pdp-gallery-layout--ij-primary .lux-pdp-gallery-main{
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+            clip: rect(0,0,0,0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+            padding: 0 !important;
+            margin: -1px !important;
+        }
+        .pdp-gallery-layout--ij-primary{
+            position: relative;
+            margin: 0 !important;
+            min-height: 0;
+        }
+        @media (max-width: 576px){
+            .pdp-media-thumb{ width: 72px; height: 72px; }
         }
     </style>
 @endonce
@@ -322,12 +454,45 @@
                 wrap.addEventListener('touchstart', onLeave, {passive:true});
             }
 
+            function bindStageZoom(){
+                var wrap = qs('[data-product-media] [data-media-image-wrap][data-lux-zoom]');
+                if (!wrap) return;
+                var img = qs('[data-media-image]', wrap);
+                if (!img) return;
+                var raf = 0;
+                function onMove(e){
+                    if (raf) return;
+                    raf = requestAnimationFrame(function(){
+                        raf = 0;
+                        var r = wrap.getBoundingClientRect();
+                        var x = ((e.clientX - r.left) / Math.max(r.width, 1)) * 100;
+                        var y = ((e.clientY - r.top) / Math.max(r.height, 1)) * 100;
+                        img.style.transformOrigin = x + '% ' + y + '%';
+                        img.style.transform = 'scale(1.85)';
+                    });
+                }
+                function onLeave(){
+                    img.style.transformOrigin = '50% 50%';
+                    img.style.transform = 'scale(1)';
+                }
+                wrap.addEventListener('mousemove', onMove);
+                wrap.addEventListener('mouseleave', onLeave);
+                wrap.addEventListener('touchstart', onLeave, {passive:true});
+            }
+
             function init(){
                 var gallery = qs('[data-lux-gallery]');
                 var thumbs = qs('[data-lux-thumbs]');
-                if (!gallery || !thumbs) return;
-                bindThumbs(gallery, thumbs);
-                bindZoom(gallery);
+                var ijActive = !!qs('[data-product-media].pdp-product-media--ij-active');
+                if (gallery && thumbs && !ijActive) {
+                    bindThumbs(gallery, thumbs);
+                    bindZoom(gallery);
+                }
+                if (ijActive) {
+                    bindStageZoom();
+                } else if (gallery) {
+                    bindZoom(gallery);
+                }
             }
 
             if (document.readyState === 'loading'){
@@ -340,6 +505,10 @@
             window.__luxPdpGalleryInit = init;
         })();
     </script>
+@endonce
+
+@once
+    <script src="{{ asset('assets/front/js/pdp-media.js') }}"></script>
 @endonce
 
 @if (filled($item->pdp_ar_model_url ?? null))

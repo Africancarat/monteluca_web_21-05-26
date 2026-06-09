@@ -26,47 +26,6 @@
           <div class="col-lg-8">
             <div class="padding-top-2x mt-2 hidden-lg-up"></div>
                 <div class="row u-d-d">
-                    @if (!empty($assignedReferralCodes) && $assignedReferralCodes->isNotEmpty())
-                        <div class="col-md-12 mb-4">
-                            <div class="card round">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center justify-content-between mb-3">
-                                        <div>
-                                            <p class="text-muted mb-1">{{ __('Referral Code and Wallet Balance') }}</p>
-                                            <h4 class="mb-0"><b>{{ PriceHelper::setCurrencyPrice(Auth::user()->referral_balance ?? 0) }}</b></h4>
-                                        </div>
-                                        <i class="icon-credit-card"
-   style="
-   font-size:32px;
-   display:flex;
-   align-items:center;
-   justify-content:center;
-   width:60px;
-   height:60px;
-   border-radius:50%;
-   background:#000;
-   color:#fff;
-"></i>
-                                    </div>
-
-                                    <div class="row">
-                                        @foreach ($assignedReferralCodes as $referralCode)
-                                            <div class="col-md-6 mb-3">
-                                                <div class="border rounded p-3 h-100">
-                                                    <span class="text-muted small d-block">{{ __('Referral Code') }}</span>
-                                                    <h5 class="mb-2"><b>{{ $referralCode->referral_code }}</b></h5>
-                                                    <p class="small mb-1">{{ __('Discount') }}: {{ $referralCode->discount_percent }}%</p>
-                                                    <p class="small mb-1">{{ __('Cashback') }}: {{ $referralCode->cashback_percent }}%</p>
-                                                    <p class="small mb-0">{{ __('Total Earned') }}: {{ PriceHelper::setCurrencyPrice($referralCode->total_earned_cashback ?? 0) }}</p>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
                     <div class="col-md-6 mb-4">
                         <div class="card round">
                             <div class="card-body text-center">
@@ -114,70 +73,6 @@
                             </div>
                         </div>
                     </div>
-                        <div class="col-md-6 mb-4">
-
-                            <div class="card round">
-
-                                <div class="card-body text-center">
-
-                                    <img src="{{ url('/core/public/storage/images/igi-logo.png') }}"
-                                         alt="IGI Logo"
-                                         style="height:60px;"
-                                         class="mb-3">
-
-                                    <h5 class="mb-3">
-
-                                        IGI Certificate Verification
-
-                                    </h5>
-
-                                    <p class="text-muted">
-
-                                        Authenticate your diamond certification directly through the official IGI portal.
-
-                                    </p>
-
-                                    <div class="mb-3 text-left">
-
-                                        <p class="mb-2">
-
-                                            <strong>Step 1:</strong>
-
-                                            Open the official IGI verification portal.
-
-                                        </p>
-
-                                        <p class="mb-2">
-
-                                            <strong>Step 2:</strong>
-
-                                            Enter your IGI certificate/report number.
-
-                                        </p>
-
-                                        <p class="mb-0">
-
-                                            <strong>Step 3:</strong>
-
-                                            Verify your certificate details.
-
-                                        </p>
-
-                                    </div>
-
-                                    <a href="https://www.igi.org/verify-your-report"
-                                       target="_blank"
-                                       class="btn btn-dark">
-
-                                        Verify Certificate
-
-                                    </a>
-
-                                </div>
-
-                            </div>
-
-                        </div>
                 </div>
           </div>
         </div>

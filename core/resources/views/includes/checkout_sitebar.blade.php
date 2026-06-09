@@ -22,14 +22,10 @@
                 <td class="text-gray-dark">{{ PriceHelper::setCurrencyPrice($cart_total) }}</td>
             </tr>
 
-            @if (!empty($gst) && ($gst['total_tax'] ?? 0) != 0)
-                <tr class="cgst-row">
-                    <td>{{ __('CGST') }} ({{ $gst['cgst_percent'] ?? 0 }}%):</td>
-                    <td class="text-gray-dark cgst-amount">{{ PriceHelper::setCurrencyPrice($gst['cgst_amount'] ?? 0) }}</td>
-                </tr>
-                <tr class="sgst-row">
-                    <td>{{ __('SGST') }} ({{ $gst['sgst_percent'] ?? 0 }}%):</td>
-                    <td class="text-gray-dark sgst-amount">{{ PriceHelper::setCurrencyPrice($gst['sgst_amount'] ?? 0) }}</td>
+            @if ($tax != 0)
+                <tr>
+                    <td>{{ __('Estimated tax') }}:</td>
+                    <td class="text-gray-dark">{{ PriceHelper::setCurrencyPrice($tax) }}</td>
                 </tr>
             @endif
 
@@ -50,11 +46,13 @@
                 </tr>
             @endif
 
-            <tr class="set__shipping_price_tr">
-                <td>{{ __('Shipping') }}:</td>
-                <td class="text-gray-dark set__shipping_price">
-                    {{ PriceHelper::setCurrencyPrice($shipping ? $shipping->price : 0) }}</td>
-            </tr>
+            @if ($shipping)
+                <tr class="d-none set__shipping_price_tr">
+                    <td>{{ __('Shipping') }}:</td>
+                    <td class="text-gray-dark set__shipping_price">
+                        {{ PriceHelper::setCurrencyPrice($shipping ? $shipping->price : 0) }}</td>
+                </tr>
+            @endif
             <tr>
                 <td class="text-lg text-primary">{{ __('Order total') }}</td>
                 <td class="text-lg text-primary grand_total_set">{{ PriceHelper::setCurrencyPrice($grand_total) }}
@@ -92,24 +90,6 @@
                             <span class="entry-meta d-inline"><b>{{ $option_name }}</b></span>
                         </div>
                     @endforeach
-                    @php
-                        $sumMetal = $item['metal_type'] ?? ($item['pdp_metal_type'] ?? null);
-                        $sumKarat = $item['gold_karat'] ?? ($item['pdp_gold_karat'] ?? null);
-                        $sumShape = $item['selected_shape'] ?? null;
-                        $sumCarat = $item['selected_carat'] ?? ($item['carat_weight'] ?? null);
-                    @endphp
-                    @if (! empty($sumMetal))
-                        <div class="entry-meta text-muted small">{{ __('Metal') }}: {{ $sumMetal }}</div>
-                    @endif
-                    @if (! empty($sumKarat) && $sumKarat !== $sumMetal)
-                        <div class="entry-meta text-muted small">{{ __('Gold karat') }}: {{ $sumKarat }}</div>
-                    @endif
-                    @if (! empty($sumCarat))
-                        <div class="entry-meta text-muted small">{{ __('Carat') }}: {{ $sumCarat }}</div>
-                    @endif
-                    @if (! empty($sumShape))
-                        <div class="entry-meta text-muted small">{{ __('Shape') }}: {{ $sumShape }}</div>
-                    @endif
                 </div>
             </div>
         @endforeach

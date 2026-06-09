@@ -1,61 +1,10 @@
 @php
-    $metalList = collect($item->pdp_metal_variants ?? [])->filter(function ($v) {
-        return is_array($v) && (! empty($v['image']) || ! empty($v['photo']));
-    });
-
-    $metalVariantMap = $metalList
-        ->map(function ($variant) {
-            $mid = (string) ($variant['key'] ?? $variant['slug'] ?? '');
-            $mlabel = (string) ($variant['label'] ?? $variant['name'] ?? $mid);
-            $mimg = (string) ($variant['image'] ?? $variant['photo'] ?? '');
-            $full = \App\Helpers\ImageHelper::storageImageUrl((string) $mimg);
-
-            $imgs = $variant['images'] ?? $variant['gallery'] ?? null;
-            $gallery = [];
-            if (is_array($imgs)) {
-                foreach ($imgs as $gi) {
-                    $gi = (string) $gi;
-                    if ($gi === '') continue;
-                    $gallery[] = \App\Helpers\ImageHelper::storageImageUrl($gi);
-                }
-            }
-
-            return [
-                'key' => $mid,
-                'label' => $mlabel,
-                'image' => $full,
-                'images' => $gallery,
-            ];
-        })
-        ->values()
-        ->all();
-
-    $shapeVariantMap = collect($item->pdpShapeVariantRows())
-        ->map(function ($row) {
-            $urls = \App\Models\Item::resolveVariantImageUrls($row);
-
-            return [
-                'shape' => $row['shape'],
-                'metal' => $row['metal'],
-                'images' => $urls,
-            ];
-        })
-        ->filter(function ($row) {
-            return ! empty($row['images']);
-        })
-        ->values()
-        ->all();
+    $metalVariantMap = \App\Services\JewelryDynamicPriceService::buildMetalVariantMapForItem($item);
 @endphp
 
 @once
     <script>
-        // Server-rendered metal → image mapping (items.pdp_metal_variants).
-        // Each entry supports { key|slug, label|name, image|photo }.
         window.__pdpMetalVariantMap = @json($metalVariantMap);
-        // Shape × metal → gallery URLs (items.pdp_shape_variants).
-        window.__pdpShapeVariantMap = @json($shapeVariantMap);
-        // External jewelry pricing API (override via .env JEWELRY_DYNAMIC_PRICE_URL).
-        window.__jewelryDynamicPriceUrl = @json(rtrim((string) env('JEWELRY_DYNAMIC_PRICE_URL', 'http://localhost/jewelry-api/dynamic-price.php'), '/'));
     </script>
 @endonce
 
@@ -75,102 +24,447 @@
             ->values();
     };
 
+    $pdpItemPrice = $item->itemPrice;
+
+    $pdpJewelrySourceIsNull = function ($value): bool {
+        if ($value === null || $value === '') {
+            return true;
+        }
+
+        return is_array($value) && $value === [];
+    };
+
+    $pdpMetalDisplayLabel = function (string $key): string {
+        $norm = strtoupper(preg_replace('/\s+/', ' ', trim($key)) ?? '');
+
+        return match ($norm) {
+            'YELLOW GOLD', 'YELLOW' => 'Yellow Gold',
+            'WHITE GOLD', 'WHITE' => 'White Gold',
+            'ROSE GOLD', 'ROSE' => 'Rose Gold',
+            default => ucwords(strtolower(str_replace('_', ' ', trim($key)))),
+        };
+    };
+
+    $pdpMetalRowsToOptions = function ($raw) use ($pdpMetalDisplayLabel): \Illuminate\Support\Collection {
+        if ($raw === null || $raw === '') {
+            return collect();
+        }
+
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
+                return collect();
+            }
+            $raw = $decoded;
+        }
+
+        if (! is_array($raw) || $raw === []) {
+            return collect();
+        }
+
+        $rows = array_is_list($raw)
+            ? $raw
+            : collect($raw)
+                ->map(function ($variant, $key) {
+                    if (! is_array($variant)) {
+                        return ['key' => (string) $key];
+                    }
+
+                    if (empty($variant['key'] ?? null) && empty($variant['slug'] ?? null)) {
+                        $variant['key'] = (string) $key;
+                    }
+
+                    return $variant;
+                })
+                ->values()
+                ->all();
+
+        $preferredOrder = ['YELLOW GOLD', 'WHITE GOLD', 'ROSE GOLD'];
+        $found = [];
+
+        foreach ($rows as $variant) {
+            if (! is_array($variant)) {
+                continue;
+            }
+            $key = trim((string) ($variant['key'] ?? $variant['slug'] ?? $variant['label'] ?? $variant['name'] ?? ''));
+            if ($key === '') {
+                continue;
+            }
+            $canonical = strtoupper(preg_replace('/\s+/', ' ', $key));
+            if (isset($found[$canonical])) {
+                continue;
+            }
+            $found[$canonical] = $key;
+        }
+
+        if ($found === []) {
+            return collect();
+        }
+
+        $ordered = [];
+        foreach ($preferredOrder as $pref) {
+            if (isset($found[$pref])) {
+                $ordered[] = $found[$pref];
+                unset($found[$pref]);
+            }
+        }
+        foreach ($found as $key) {
+            $ordered[] = $key;
+        }
+
+        return collect($ordered)->map(function (string $key) use ($pdpMetalDisplayLabel) {
+            return [
+                'value' => $key,
+                'label' => $pdpMetalDisplayLabel($key),
+            ];
+        })->values();
+    };
+
+    $pdpMetalsFromVariants = function () use ($item, $pdpMetalRowsToOptions) {
+        return $pdpMetalRowsToOptions($item->pdp_metal_variants ?? null);
+    };
+
+    $pdpMetalsFromItemPriceImage = function () use ($pdpItemPrice, $pdpMetalRowsToOptions) {
+        if (! $pdpItemPrice) {
+            return collect();
+        }
+
+        return $pdpMetalRowsToOptions($pdpItemPrice->image ?? null);
+    };
+
+    $pdpKaratFromItemPrices = function () use ($pdpItemPrice): \Illuminate\Support\Collection {
+        if (! $pdpItemPrice) {
+            return collect();
+        }
+
+        $options = [];
+        if (($pdpItemPrice->gold_18k_price ?? null) !== null) {
+            $options[] = '18K';
+        }
+        if (($pdpItemPrice->gold_14k_price ?? null) !== null) {
+            $options[] = '14K';
+        }
+
+        return collect($options);
+    };
+
+    // Material options: items.metal_type → items.pdp_metal_variants → items_prices.image
     $metalTypes = $optionList($item->metal_type ?? '');
+    $pdpMetalOptions = collect();
+
+    if ($metalTypes->isNotEmpty()) {
+        $pdpMetalOptions = $metalTypes->map(function (string $val) {
+            return ['value' => $val, 'label' => $val];
+        })->values();
+    } else {
+        $pdpMetalOptions = $pdpMetalsFromVariants();
+        if ($pdpMetalOptions->isEmpty()) {
+            $pdpMetalOptions = $pdpMetalsFromItemPriceImage();
+        }
+        if ($pdpMetalOptions->isNotEmpty()) {
+            $metalTypes = $pdpMetalOptions->pluck('value');
+        }
+    }
+
     $goldKarats = $optionList($item->gold_karat ?? '');
+    if ($pdpJewelrySourceIsNull($item->gold_karat) && $goldKarats->isEmpty()) {
+        $goldKarats = $pdpKaratFromItemPrices();
+    }
+
+    $pdpClarityFromItemPrices = function () use ($pdpItemPrice): \Illuminate\Support\Collection {
+        if (! $pdpItemPrice) {
+            return collect();
+        }
+
+        $tiers = [
+            'VVS / EF' => 'vvs_ef_price',
+            'VVS / GH' => 'vvs_gh_price',
+            'VS / GH' => 'vs_gh_price',
+            'SI / IJ' => 'si_ij_price',
+        ];
+        $out = [];
+        foreach ($tiers as $label => $column) {
+            if (($pdpItemPrice->{$column} ?? null) !== null) {
+                $out[] = $label;
+            }
+        }
+
+        return collect($out);
+    };
+
     $da = $item->diamondAttribute ?? null;
     $diamondColorGrades = $optionList($da?->color_grade ?? '');
     $diamondClarityGrades = $optionList($da?->clarity_grade ?? '');
-    $diamondShapes = $optionList($da?->shape ?? '');
+    if ($pdpJewelrySourceIsNull($da?->clarity_grade ?? null) && $diamondClarityGrades->isEmpty()) {
+        $diamondClarityGrades = $pdpClarityFromItemPrices();
+    }
 
     // Default selection: first value (or empty). Keeps UI deterministic without affecting cart/pricing.
     $selectedMetal = (string) ($metalTypes->first() ?? '');
     $selectedKarat = (string) ($goldKarats->first() ?? '');
     $selectedDiamondColor = (string) ($diamondColorGrades->first() ?? '');
     $selectedDiamondClarity = (string) ($diamondClarityGrades->first() ?? '');
-    $selectedDiamondShape = (string) ($diamondShapes->first() ?? '');
 
-    $pdpEnableDynamicApiPrice = $goldKarats->isNotEmpty()
-        || $diamondColorGrades->isNotEmpty()
-        || $diamondClarityGrades->isNotEmpty()
-        || $diamondShapes->isNotEmpty()
-        || ($da && $da->carat_weight !== null && (float) $da->carat_weight > 0);
+    $pdpTierPriceMap = \App\Services\JewelryDynamicPriceService::clientTierPriceMapForItem($item);
+    $pdpEnableTierPricing = $pdpTierPriceMap !== null
+        && ($goldKarats->isNotEmpty() || $diamondClarityGrades->isNotEmpty());
+
+    $pdpKaratBadgePrice = function (string $karat) use ($pdpItemPrice): ?float {
+        if (! $pdpItemPrice) {
+            return null;
+        }
+        $token = strtoupper(preg_replace('/\s+/', '', $karat) ?? '');
+        if ($token === '') {
+            return null;
+        }
+        if (str_contains($token, '18')) {
+            $v = $pdpItemPrice->gold_18k_price ?? null;
+
+            return is_numeric($v) ? (float) $v : null;
+        }
+        if (str_contains($token, '14')) {
+            $v = $pdpItemPrice->gold_14k_price ?? null;
+
+            return is_numeric($v) ? (float) $v : null;
+        }
+
+        return null;
+    };
+
+    $pdpClarityExtraColumn = function (string $clarity): ?string {
+        $token = strtoupper(preg_replace('/[^A-Z0-9]/', '', $clarity) ?? '');
+
+        return match (true) {
+            str_contains($token, 'VVSEF') => 'vvs_ef_price',
+            str_contains($token, 'VVSGH') => 'vvs_gh_price',
+            str_contains($token, 'VSGH') => 'vs_gh_price',
+            str_contains($token, 'SIIJ') => 'si_ij_price',
+            default => null,
+        };
+    };
+
+    $pdpClarityExtraAmount = function (string $clarity) use ($pdpItemPrice, $pdpClarityExtraColumn): ?float {
+        if (! $pdpItemPrice) {
+            return null;
+        }
+        $column = $pdpClarityExtraColumn($clarity);
+        if ($column === null) {
+            return null;
+        }
+        $v = $pdpItemPrice->{$column} ?? null;
+
+        return is_numeric($v) ? (float) $v : null;
+    };
+
+    $pdpFormatInrBadge = function (?float $amount): ?string {
+        if ($amount === null || $amount <= 0) {
+            return null;
+        }
+
+        return '₹ ' . number_format($amount, 2);
+    };
+
+    $pdpFormatBadgePrice = function (?float $amount): ?string {
+        if ($amount === null || $amount <= 0) {
+            return null;
+        }
+
+        $sign = \App\Helpers\PriceHelper::setCurrencySign();
+
+        return trim($sign) === '₹'
+            ? '₹ ' . number_format($amount, 2)
+            : $sign . ' ' . number_format($amount, 2);
+    };
+
+    $pdpQualityPillLabel = function (string $clarity) use ($pdpFormatInrBadge, $pdpClarityExtraAmount): string {
+        $extra = $pdpFormatInrBadge($pdpClarityExtraAmount($clarity));
+        if ($extra) {
+            return $clarity . ' ( ' . $extra . ' )';
+        }
+
+        return $clarity;
+    };
+
+    $pdpKaratDisplayLabel = function (string $karat): string {
+        return strtolower(trim($karat));
+    };
+
+    $pdpGoldWeight = $pdpItemPrice?->gold_weight ?? $item->gold_weight ?? null;
+    $pdpLabourPerGram = $pdpItemPrice?->labour_per_gram ?? $item->labour_per_gram ?? null;
+    $pdpDiamondShape = trim((string) ($da?->shape ?? ''));
+    $pdpDiamondLineParts = [];
+    if ($pdpItemPrice && filled($pdpItemPrice->diamond_count ?? null)) {
+        $pdpDiamondLineParts[] = $pdpItemPrice->diamond_count . ' ' . __('pcs');
+    }
+    if ($pdpItemPrice && filled($pdpItemPrice->diamond_weight ?? null)) {
+        $pdpDiamondLineParts[] = $pdpItemPrice->diamond_weight . ' ' . __('ct');
+    }
+    if ($pdpDiamondShape !== '') {
+        $pdpDiamondLineParts[] = $pdpDiamondShape;
+    }
+    $pdpHasSpecs = filled($item->sku)
+        || filled($pdpGoldWeight)
+        || filled($pdpLabourPerGram)
+        || $pdpDiamondLineParts !== [];
+
+    $pdpLineUnitBase = (float) ($pdp_line_unit_base ?? \App\Services\JewelryDynamicPriceService::initialPdpUnitBasePrice($item));
+    $pdpMainPriceDisplay = (float) $item->discount_price > 0
+        ? PriceHelper::grandCurrencyPrice($item)
+        : ($item->itemPrice && $pdpLineUnitBase > 0
+            ? PriceHelper::setCurrencyPrice($pdpLineUnitBase)
+            : PriceHelper::grandCurrencyPrice($item));
+$pdpMakingCharge = null;
+
+if (!empty($item->details)) {
+    preg_match('/Making Charge:\s*(.*?)Diamonds:/is', strip_tags($item->details), $matches);
+    $pdpMakingCharge = trim($matches[1] ?? '');
+}
 @endphp
 
-<input type="hidden" id="pdp_selected_metal_type" value="{{ $selectedMetal }}">
-<input type="hidden" id="pdp_selected_gold_karat" value="{{ $selectedKarat }}">
-<input type="hidden" id="pdp_selected_diamond_color" value="{{ $selectedDiamondColor }}">
-<input type="hidden" id="pdp_selected_diamond_clarity" value="{{ $selectedDiamondClarity }}">
-<input type="hidden" id="pdp_selected_diamond_shape" value="{{ $selectedDiamondShape }}">
+<div class="ij-pdp-configurator luxury-pdp-configurator" data-ij-pdp-config>
+    @if ($pdpHasSpecs)
+        <div class="ij-pdp-specs">
+            @if (filled($item->sku))
+                <p class="ij-pdp-specs__line">
+                    <span class="ij-pdp-specs__label">{{ __('Product code') }}:</span>
+                    <span class="ij-pdp-specs__value">{{ $item->sku }}</span>
+                </p>
+            @endif
+            @if (filled($pdpGoldWeight))
+                <p class="ij-pdp-specs__line">
+                    <span class="ij-pdp-specs__label">{{ __('Gold Weight') }}:</span>
+                    <span class="ij-pdp-specs__value">{{ number_format((float) $pdpGoldWeight, 2) }}g</span>
+                </p>
+            @endif
+{{--            @if (filled($pdpLabourPerGram))--}}
+{{--                <p class="ij-pdp-specs__line">--}}
+{{--                    <span class="ij-pdp-specs__label">{{ __('Making Charge') }}:</span>--}}
+{{--                    <span class="ij-pdp-specs__value">{{ $pdpLabourPerGram }}</span>--}}
+{{--                </p>--}}
+{{--            @endif--}}
+                @if (filled($pdpMakingCharge))
+                    <p class="ij-pdp-specs__line">
+                        <span class="ij-pdp-specs__label">{{ __('Making Charge') }}:</span>
+                        <span class="ij-pdp-specs__value">{{ $pdpMakingCharge }}</span>
+                    </p>
+                @endif
+            @if ($pdpDiamondLineParts !== [])
+                <p class="ij-pdp-specs__line">
+                    <span class="ij-pdp-specs__label">{{ __('Diamonds') }}:</span>
+                    <span class="ij-pdp-specs__value">{{ implode(', ', $pdpDiamondLineParts) }}</span>
+                </p>
+            @endif
+        </div>
+    @endif
 
-@if ($diamondShapes->isNotEmpty())
-    @include('front.catalog.partials.pdp-diamond-shapes-scroll', [
-        'diamondShapes' => $diamondShapes,
-        'selectedDiamondShape' => $selectedDiamondShape,
-    ])
-@endif
+    <div class="ij-pdp-price luxury-pdp-price-block">
+        <div class="ij-pdp-price__inner price-area" id="pdp_price_area"
+            data-initial-previous="{{ (float) $item->previous_price }}"
+            data-initial-discount="{{ (float) $item->discount_price }}">
+            <small id="pdp_compare_price_wrap"
+                class="ij-pdp-price__compare @if ($item->previous_price == 0) d-none @endif">
+                <del id="pdp_compare_price">{{ $item->previous_price != 0 ? PriceHelper::setPreviousPrice($item->previous_price) : '' }}</del>
+            </small>
+            <span id="main_price" class="main-price product-price ij-pdp-price__amount">{{ $pdpMainPriceDisplay }}</span>
+        </div>
+    </div>
 
-@if($item->diamondAttribute)
+    <input type="hidden" id="pdp_selected_metal_type" value="{{ $selectedMetal }}">
+    <input type="hidden" id="pdp_selected_gold_karat" value="{{ $selectedKarat }}">
+    <input type="hidden" id="pdp_selected_diamond_color" value="{{ $selectedDiamondColor }}">
+    <input type="hidden" id="pdp_selected_diamond_clarity" value="{{ $selectedDiamondClarity }}">
 
-    @include('front.catalog.partials.pdp-carat-weight-slider', [
-        'selectedCarat' => (float) ($item->diamondAttribute->carat_weight ?? 1.0),
-    ])
-@endif
+    <div class="ij-pdp-options">
+        @if ($pdpMetalOptions->isNotEmpty())
+            <div class="ij-pdp-field">
+                <div class="ij-pdp-field__title">{{ __('Material') }}</div>
+                <div class="ij-pdp-field__row ij-pdp-field__row--material option-group" data-option-group="metal_type">
+                    @foreach ($pdpMetalOptions as $opt)
+                        @php
+                            $metalVal = (string) ($opt['value'] ?? '');
+                            $metalLabel = (string) ($opt['label'] ?? $metalVal);
+                            $metalActive = strtolower($selectedMetal) === strtolower($metalVal);
+                        @endphp
+                        <label class="ij-pdp-radio">
+                            <button
+                                type="button"
+                                class="option-btn metal-btn ij-pdp-radio__btn {{ $metalActive ? 'active' : '' }}"
+                                data-value="{{ $metalVal }}"
+                                data-metal-key="{{ $metalVal }}">
+                                <span class="ij-pdp-radio__control" aria-hidden="true"></span>
+                                <span class="ij-pdp-radio__text">{{ $metalLabel }}</span>
+                            </button>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
-@if ($metalTypes->isNotEmpty())
-  <h4>Metal Type</h4>
-  <div class="option-group" data-option-group="metal_type">
-  @foreach ($metalTypes as $val)
-  <button 
-    type="button" 
-    class="option-btn metal-btn {{ strtolower($selectedMetal) == strtolower($val) ? 'active' : '' }}" 
-    data-value="{{ $val }}">
-    {{ $val }}
-  </button>
-@endforeach
-  </div>
-@endif
+        @if ($goldKarats->isNotEmpty())
+            <div class="ij-pdp-field">
+                <div class="ij-pdp-field__title">{{ __('Gold Carat') }}</div>
+                <div class="ij-pdp-field__row ij-pdp-field__row--karat option-group" data-option-group="gold_karat">
+                    @foreach ($goldKarats as $val)
+                        @php
+                            $karatBadge = $pdpFormatInrBadge($pdpKaratBadgePrice($val));
+                            $karatActive = strtoupper($selectedKarat) === strtoupper($val);
+                        @endphp
+                        <label class="ij-pdp-radio ij-pdp-radio--karat">
+                            <button
+                                type="button"
+                                class="option-btn karat-btn ij-pdp-radio__btn {{ $karatActive ? 'active' : '' }}"
+                                data-value="{{ $val }}">
+                                <span class="ij-pdp-radio__control" aria-hidden="true"></span>
+                                <span class="ij-pdp-radio__text ij-pdp-radio__text--karat">{{ $pdpKaratDisplayLabel($val) }}</span>
+                                @if ($karatBadge)
+                                    <span class="ij-pdp-karat-badge">{{ $karatBadge }}</span>
+                                @endif
+                            </button>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
-@if ($goldKarats->isNotEmpty())
-  <h4>Gold Karat</h4>
-  <div class="option-group" data-option-group="gold_karat">
-  @foreach ($goldKarats as $val)
-  <button 
-    type="button" 
-    class="option-btn karat-btn {{ strtoupper($selectedKarat) == strtoupper($val) ? 'active' : '' }}" 
-    data-value="{{ $val }}">
-    {{ $val }}
-  </button>
-@endforeach
-  </div>
-@endif
+        @if ($diamondClarityGrades->isNotEmpty())
+            <div class="ij-pdp-field">
+                <div class="ij-pdp-field__title">{{ __('Quality') }}</div>
+                <div class="ij-pdp-field__row ij-pdp-field__row--quality option-group" data-option-group="diamond_clarity">
+                    @foreach ($diamondClarityGrades as $val)
+                        @php $clarityActive = strtoupper($selectedDiamondClarity) === strtoupper($val); @endphp
+                        <label class="ij-pdp-pill">
+                            <button
+                                type="button"
+                                class="option-btn clarity-btn ij-pdp-pill__btn {{ $clarityActive ? 'active' : '' }}"
+                                data-value="{{ $val }}">
+                                <span class="ij-pdp-pill__label">{{ $pdpQualityPillLabel($val) }}</span>
+                            </button>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
-@if ($diamondClarityGrades->isNotEmpty())
-  <h4>Diamond Clarity</h4>
-  <div class="option-group" data-option-group="diamond_clarity">
-  @foreach ($diamondClarityGrades as $val)
-  <button
-    type="button"
-    class="option-btn clarity-btn {{ strtoupper($selectedDiamondClarity) == strtoupper($val) ? 'active' : '' }}"
-    data-value="{{ $val }}">
-    {{ $val }}
-  </button>
-@endforeach
-  </div>
-@endif
-
-@if ($diamondColorGrades->isNotEmpty())
-  <h4>Diamond Color</h4>
-  <div class="option-group" data-option-group="diamond_color">
-  @foreach ($diamondColorGrades as $val)
-  <button
-    type="button"
-    class="option-btn color-btn {{ strtoupper($selectedDiamondColor) == strtoupper($val) ? 'active' : '' }}"
-    data-value="{{ $val }}">
-    {{ $val }}
-  </button>
-@endforeach
-  </div>
-@endif
+        @if ($diamondColorGrades->isNotEmpty())
+            <div class="ij-pdp-field ij-pdp-field--extra">
+                <div class="ij-pdp-field__title">{{ __('Diamond Color') }}</div>
+                <div class="ij-pdp-field__row ij-pdp-field__row--quality option-group" data-option-group="diamond_color">
+                    @foreach ($diamondColorGrades as $val)
+                        @php $colorActive = strtoupper($selectedDiamondColor) === strtoupper($val); @endphp
+                        <label class="ij-pdp-pill">
+                            <button
+                                type="button"
+                                class="option-btn color-btn ij-pdp-pill__btn {{ $colorActive ? 'active' : '' }}"
+                                data-value="{{ $val }}">
+                                <span class="ij-pdp-pill__label">{{ $val }}</span>
+                            </button>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+    </div>
+</div>
 
 @once
   <script>
@@ -178,18 +472,21 @@
       function setMainPdpImageSrc(src) {
         if (!src) return;
 
-        // OwlCarousel renders clones; the visible image is usually inside `.owl-item.active`.
+        var stageImg = document.querySelector('[data-product-media] [data-media-image]');
+        if (stageImg) {
+          stageImg.src = src;
+          var wrap = stageImg.closest('[data-media-image-wrap]');
+          if (wrap) wrap.classList.remove('d-none');
+        }
+
         var activeImg = document.querySelector('#productGallery .product-details-slider .owl-item.active img');
         if (activeImg) {
           activeImg.src = src;
           return;
         }
 
-        // Fallback: non-initialized carousel / plain markup.
         var firstImg = document.querySelector('#productGallery .product-details-slider .item:first-child img');
-        if (firstImg) {
-          firstImg.src = src;
-        }
+        if (firstImg) firstImg.src = src;
       }
 
       function setPdpGalleryImages(imgList) {
@@ -200,12 +497,25 @@
         var gallery = document.querySelector('#productGallery .product-details-slider');
         if (!gallery) return false;
 
-        // Update thumbs used by the PDP gallery.
-        var legacyThumbs = document.querySelector('[data-lux-thumbs]') || document.querySelector('.gallery-thumbs');
+        // Legacy vertical rail only when iJewel metal strip is not active.
+        var ijActive = document.querySelector('[data-product-media].pdp-product-media--ij-active');
+        var legacyThumbs = !ijActive
+          ? (document.querySelector('[data-lux-thumbs]') || document.querySelector('.gallery-thumbs'))
+          : null;
         if (legacyThumbs) {
           legacyThumbs.innerHTML = imgList.map(function (u) {
-            return '<button type="button" class="lux-thumb" data-lux-thumb><img src="' + String(u) + '" class="gallery-thumb" loading="lazy" alt=""></button>';
+            return '<button type="button" class="lux-thumb" data-lux-thumb><img src="' + String(u) + '" class="gallery-thumb" loading="lazy" alt="" decoding="async"></button>';
           }).join('');
+        }
+
+        var luxGallery = document.querySelector('#productGallery[data-lux-gallery]');
+        var useZoom = !!luxGallery;
+
+        function owlItemHtml(u) {
+          if (useZoom) {
+            return '<div class="item"><div class="lux-zoom-wrap" data-lux-zoom><img src="' + String(u) + '" loading="lazy" alt="" class="lux-main-img"></div></div>';
+          }
+          return '<div class="item"><img src="' + String(u) + '" loading="lazy" alt=""></div>';
         }
 
         // If OwlCarousel is initialized, rebuild via jQuery API (safe refresh).
@@ -213,9 +523,7 @@
           var $ = window.jQuery;
           var $owl = $(gallery);
           if ($owl.hasClass('owl-loaded')) {
-            $owl.trigger('replace.owl.carousel', [imgList.map(function (u) {
-              return '<div class="item"><img src="' + String(u) + '" loading="lazy" alt=""></div>';
-            }).join('')]);
+            $owl.trigger('replace.owl.carousel', [imgList.map(owlItemHtml).join('')]);
             $owl.trigger('refresh.owl.carousel');
             if (typeof window.__luxPdpGalleryInit === 'function') {
               window.__luxPdpGalleryInit();
@@ -225,9 +533,7 @@
         }
 
         // Non-owl fallback: replace markup.
-        gallery.innerHTML = imgList.map(function (u) {
-          return '<div class="item"><div class="lux-zoom-wrap" data-lux-zoom><img src="' + String(u) + '" loading="lazy" alt="" class="lux-main-img"></div></div>';
-        }).join('');
+        gallery.innerHTML = imgList.map(owlItemHtml).join('');
         if (typeof window.__luxPdpGalleryInit === 'function') {
           window.__luxPdpGalleryInit();
         }
@@ -241,70 +547,15 @@
           .trim();
       }
 
-      function normalizePdpToken(str) {
-        return String(str || '')
-          .toUpperCase()
-          .replace(/\s+/g, ' ')
-          .trim();
-      }
-
-      function pdpFindShapeMetalGallery(shapeTok, metalTok) {
-        var rows = window.__pdpShapeVariantMap || [];
-        if (!Array.isArray(rows) || rows.length === 0 || !shapeTok || !metalTok) {
-          return null;
-        }
-        for (var i = 0; i < rows.length; i++) {
-          var row = rows[i] || {};
-          if (
-            normalizePdpToken(row.shape) === shapeTok &&
-            normalizePdpToken(row.metal) === metalTok &&
-            Array.isArray(row.images) &&
-            row.images.length
-          ) {
-            return row.images;
-          }
-        }
-        return null;
-      }
-
-      function pdpUpdateGallery() {
-        var shapeEl = document.getElementById('pdp_selected_diamond_shape');
-        var metalEl = document.getElementById('pdp_selected_metal_type');
-        var shapeTok = normalizePdpToken(shapeEl ? shapeEl.value : '');
-        var metalTok = normalizePdpToken(metalEl ? metalEl.value : '');
-
-        var shapeGallery = pdpFindShapeMetalGallery(shapeTok, metalTok);
-        if (shapeGallery) {
-          setPdpGalleryImages(shapeGallery);
+      function trySwapMetalImageByLabel(label) {
+        if (window.PdpMedia && typeof window.PdpMedia.renderMetalByLabel === 'function') {
+          window.PdpMedia.renderMetalByLabel(label);
           return;
         }
 
-        if (metalEl && metalEl.value) {
-          trySwapMetalImageByLabel(metalEl.value);
-        }
-      }
-      window.pdpUpdateGallery = pdpUpdateGallery;
-
-      function trySwapMetalImageByLabel(label) {
-        // Uses items.pdp_metal_variants mapping (if present) to swap hero/gallery images.
         var desired = normalizeMetalToken(label);
         if (!desired) return;
 
-        // If the metal chip UI exists, reuse it (keeps active styles consistent).
-        var chips = document.querySelectorAll('#pdpMetalSelector .metal-chip');
-        if (chips && chips.length) {
-          for (var i = 0; i < chips.length; i++) {
-            var c = chips[i];
-            var key = normalizeMetalToken(c.getAttribute('data-metal-key') || '');
-            var txt = normalizeMetalToken(c.textContent || '');
-            if (desired === key || desired === txt) {
-              swapPdpMetalImage(c);
-              return;
-            }
-          }
-        }
-
-        // Fallback: find variant mapping from server-rendered JSON.
         var raw = window.__pdpMetalVariantMap || [];
         if (!Array.isArray(raw) || raw.length === 0) return;
         for (var j = 0; j < raw.length; j++) {
@@ -317,7 +568,6 @@
             if (list) {
               setPdpGalleryImages(list);
             } else if (src) {
-              // Fallback: swap only main image if only a single image is provided.
               setMainPdpImageSrc(src);
             }
             return;
@@ -325,12 +575,27 @@
         }
       }
 
-      document.addEventListener('click', function (e) {
-        var btn = e.target && e.target.closest ? e.target.closest('.option-group .option-btn') : null;
-        if (!btn) return;
+      window.__pdpSetGalleryImages = setPdpGalleryImages;
+      window.__pdpSetMainImageSrc = setMainPdpImageSrc;
 
-        var group = btn.closest('.option-group');
+      function resolveOptionButton(target, group) {
+        if (!target || !group) return null;
+        var btn = target.closest ? target.closest('.option-btn') : null;
+        if (btn && group.contains(btn)) return btn;
+        var label = target.closest ? target.closest('label') : null;
+        if (label && group.contains(label)) {
+          btn = label.querySelector('.option-btn');
+          if (btn) return btn;
+        }
+        return null;
+      }
+
+      document.addEventListener('click', function (e) {
+        var group = e.target && e.target.closest ? e.target.closest('.option-group') : null;
         if (!group) return;
+
+        var btn = resolveOptionButton(e.target, group);
+        if (!btn) return;
 
         group.querySelectorAll('.option-btn').forEach(function (b) {
           b.classList.remove('active');
@@ -343,7 +608,7 @@
         if (gv === 'metal_type') {
           var el = document.getElementById('pdp_selected_metal_type');
           if (el) el.value = v;
-          pdpUpdateGallery();
+          trySwapMetalImageByLabel(v);
         } else if (gv === 'gold_karat') {
           var el2 = document.getElementById('pdp_selected_gold_karat');
           if (el2) el2.value = v;
@@ -356,304 +621,162 @@
         }
 
         if (gv === 'gold_karat' || gv === 'diamond_color' || gv === 'diamond_clarity') {
-          document.dispatchEvent(new CustomEvent('pdp-jewelry-variant-change', {
-            bubbles: true,
-            detail: { source: gv },
-          }));
-        }
-      });
-
-      document.addEventListener('DOMContentLoaded', function () {
-        if ((window.__pdpShapeVariantMap || []).length) {
-          pdpUpdateGallery();
+          document.dispatchEvent(new CustomEvent('pdp-jewelry-variant-change', { bubbles: true }));
         }
       });
     })();
   </script>
 @endonce
 
-{{-- Dynamic price: loads after jQuery (footer). Script defers init until jQuery exists. --}}
-@if (! empty($pdpEnableDynamicApiPrice))
+{{-- items_prices tier pricing (gold_* + vvs_* / vs_* / si_*); no external API. --}}
+@if (! empty($pdpEnableTierPricing))
 <script>
-/**
- * PDP dynamic pricing — jewelry-api (INR) → session currency.
- * Root cause fix: this partial renders BEFORE footer jQuery; do not call (jQuery)(window.jQuery) inline.
- */
 (function () {
-  'use strict';
+  window.__pdpTierPriceMap = @json($pdpTierPriceMap);
 
-  var API_URL =
-    (typeof window.__jewelryDynamicPriceUrl === 'string' && window.__jewelryDynamicPriceUrl) ||
-    @json(rtrim((string) env('JEWELRY_DYNAMIC_PRICE_URL', 'http://localhost/jewelry-api/dynamic-price.php'), '/'));
-
-  var DEBOUNCE_OPTION_MS = 280;
-  var DEBOUNCE_CARAT_MS = 480;
-
-  function boot($) {
-    if (window.__pdpDynamicPriceBooted) {
-      return true;
-    }
-
-    console.log('[PDP Price] Booting dynamic pricing', { api: API_URL });
-
-    window.__pdpJewelrySelection = window.__pdpJewelrySelection || {};
-    window.__pdpDynamicPriceState = {
-      loading: false,
-      requestId: 0,
-      xhr: null,
-      debounceTimer: null,
-      lastSuccessKey: null,
+  function pdpNumberFormat(number, decimals, decPoint, thousandsSep) {
+    number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
+    var n = !isFinite(+number) ? 0 : +number;
+    var prec = !isFinite(+decimals) ? 0 : Math.abs(decimals);
+    var sep = thousandsSep === undefined ? ',' : thousandsSep;
+    var dec = decPoint === undefined ? '.' : decPoint;
+    var toFixedFix = function (num, prec2) {
+      var k = Math.pow(10, prec2);
+      return '' + Math.round(num * k) / k;
     };
-
-    function $el(id) {
-      return $('#' + id);
+    var s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+    if (s[0].length > 3) {
+      s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
     }
-
-    function readSelections() {
-      var shapeRaw = String($el('pdp_selected_diamond_shape').val() || '').trim();
-      var slider = document.getElementById('pdp_carat_slider');
-      var sliderVal = slider ? String(slider.value || '').trim() : '';
-      var hiddenCarat = String($el('pdp_selected_carat_weight').val() || '').trim();
-      var selectedCarat = hiddenCarat || sliderVal;
-      var productId = parseInt($el('item_id').val(), 10);
-
-      return {
-        product_id: isFinite(productId) ? productId : null,
-        karat: String($el('pdp_selected_gold_karat').val() || '').trim(),
-        quality: String($el('pdp_selected_diamond_clarity').val() || '').trim(),
-        color: String($el('pdp_selected_diamond_color').val() || '').trim(),
-        shape: shapeRaw.toLowerCase(),
-        selected_carat: selectedCarat,
-      };
+    if ((s[1] || '').length < prec) {
+      s[1] = s[1] || '';
+      s[1] += new Array(prec - s[1].length + 1).join('0');
     }
+    return s.join(dec);
+  }
 
-    function payloadKey(sel) {
-      return JSON.stringify([
-        sel.product_id,
-        sel.karat,
-        sel.quality,
-        sel.color,
-        sel.shape,
-        sel.selected_carat,
-      ]);
+  function getCurrencyParts() {
+    var signEl = document.getElementById('set_currency');
+    var dirEl = document.getElementById('currency_direction');
+    var valEl = document.getElementById('set_currency_val');
+    return {
+      sign: signEl ? signEl.value : '',
+      direction: dirEl ? String(dirEl.value) : '0',
+      value: valEl ? parseFloat(valEl.value) || 1 : 1,
+    };
+  }
+
+  function formatMoneyDisplay(basePrice) {
+    var c = getCurrencyParts();
+    var conv = Math.round(parseFloat(basePrice) * c.value * 100) / 100;
+    if (!isFinite(conv)) return '';
+    var dec = typeof decimal_separator !== 'undefined' ? decimal_separator : '.';
+    var thou = typeof thousand_separator !== 'undefined' ? thousand_separator : ',';
+    var formatted = pdpNumberFormat(conv, 2, dec, thou);
+    if (c.direction === '1' || c.direction === 1) {
+      return c.sign + formatted;
     }
+    return formatted + c.sign;
+  }
 
-    function getCurrencyParts() {
-      return {
-        sign: String($el('set_currency').val() || ''),
-        direction: String($el('currency_direction').val() || '0'),
-        rate: parseFloat($el('set_currency_val').val()) || 1,
-        code: String($el('pdp_currency_code').val() || '').trim(),
-      };
-    }
+  function convertBaseToSession(basePrice) {
+    var v = getCurrencyParts().value;
+    var n = Math.round(parseFloat(basePrice) * v * 100) / 100;
+    return isFinite(n) ? n : null;
+  }
 
-    function formatMoneyDisplay(priceInr) {
-      var c = getCurrencyParts();
-      var conv = Math.round(parseFloat(priceInr) * c.rate * 100) / 100;
-      if (!isFinite(conv)) {
-        return '';
-      }
-      var dec = typeof window.decimal_separator !== 'undefined' ? window.decimal_separator : '.';
-      var thou = typeof window.thousand_separator !== 'undefined' ? window.thousand_separator : ',';
-      var toFixedFix = function (num, p) {
-        var k = Math.pow(10, p);
-        return '' + Math.round(num * k) / k;
-      };
-      var s = (toFixedFix(conv, 2) + '').split('.');
-      if (s[0].length > 3) {
-        s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, thou);
-      }
-      if ((s[1] || '').length < 2) {
-        s[1] = s[1] || '';
-        s[1] += new Array(2 - s[1].length + 1).join('0');
-      }
-      var formatted = s.join(dec);
-      if (c.direction === '1' || c.direction === 1) {
-        return c.sign + formatted;
-      }
-      return formatted + c.sign;
-    }
+  function normalizeKaratToken(str) {
+    return String(str || '').toUpperCase().replace(/\s+/g, '');
+  }
 
-    function convertInrToSession(priceInr) {
-      var n = Math.round(parseFloat(priceInr) * getCurrencyParts().rate * 100) / 100;
-      return isFinite(n) ? n : null;
-    }
+  function normalizeClarityToken(str) {
+    return String(str || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  }
 
-    function extractApiPrices(json) {
-      var data = json;
-      if (data && data.data && typeof data.data === 'object') {
-        var inner = data.data;
-        if (inner.final_price != null || inner.price != null) {
-          data = inner;
+    function resolvePdpTierPrice() {
+        var tiers = window.__pdpTierPriceMap;
+        if (!tiers) return null;
+
+        var kEl = document.getElementById('pdp_selected_gold_karat');
+        var qEl = document.getElementById('pdp_selected_diamond_clarity');
+
+        var kToken = normalizeKaratToken(kEl ? String(kEl.value || '').trim() : '');
+        var qToken = normalizeClarityToken(qEl ? String(qEl.value || '').trim() : '');
+
+        var qualityPrice = 0;
+        var goldPrice = 0;
+
+        // Gold Karat Price
+        var goldKey = null;
+        if (kToken.indexOf('18') >= 0) goldKey = '18K';
+        else if (kToken.indexOf('14') >= 0) goldKey = '14K';
+
+        if (goldKey && tiers.gold && tiers.gold[goldKey] != null) {
+            goldPrice = parseFloat(tiers.gold[goldKey]) || 0;
         }
-      }
-      var num = parseFloat(data && data.final_price != null ? data.final_price : data.price);
-      if (!isFinite(num) || num <= 0) {
-        return null;
-      }
-      return { final_price_inr: num, previous_inr: null };
+
+        // Diamond Quality Price
+        var clarityKey = null;
+        if (qToken.indexOf('VVSEF') >= 0) clarityKey = 'VVS / EF';
+        else if (qToken.indexOf('VVSGH') >= 0) clarityKey = 'VVS / GH';
+        else if (qToken.indexOf('VSGH') >= 0) clarityKey = 'VS / GH';
+        else if (qToken.indexOf('SIIJ') >= 0) clarityKey = 'SI / IJ';
+
+        if (clarityKey && tiers.clarity && tiers.clarity[clarityKey] != null) {
+            qualityPrice = parseFloat(tiers.clarity[clarityKey]) || 0;
+        }
+
+        // Gold Weight from blade
+        var goldWeight = {{ (float) ($pdpGoldWeight ?? 0) }};
+
+        // Gold Rate per gram
+        var goldRate = 1800;
+
+        // Gold Amount
+        var goldAmount = goldWeight * goldRate;
+
+        // Subtotal
+        var subtotal = qualityPrice + goldPrice + goldAmount;
+
+        // 10% Margin
+        var finalPrice = subtotal * 1.10;
+
+        return Math.round(finalPrice);
     }
 
-    function setLoading(on) {
-      window.__pdpDynamicPriceState.loading = on;
-      $('#pdp_price_area').toggleClass('is-pdp-price-loading', on).toggleClass('is-pdp-price-error', false);
-      // Avoid layout shift: keep the element in flow and toggle only visibility.
-      $('#pdp_price_loading_msg').css('visibility', on ? 'visible' : 'hidden');
-    }
+  function applyPdpTierPrice() {
+    var base = resolvePdpTierPrice();
+    if (base == null) return;
 
-    function setPriceError(message) {
-      $('#pdp_price_area').addClass('is-pdp-price-error').removeClass('is-pdp-price-loading');
-      // Keep reserved space; hide the message.
-      $('#pdp_price_loading_msg').css('visibility', 'hidden');
-      console.warn('[PDP Price]', message);
-    }
-
-    function applyPrices(priceInr, sel) {
-      var converted = convertInrToSession(priceInr);
-      if (converted == null) {
-        setPriceError('Currency conversion failed');
-        return;
-      }
-      var display = formatMoneyDisplay(priceInr);
-      $el('demo_price').val(String(converted));
-      $el('pdp_line_base_price').val(String(priceInr));
-      $('#main_price, .product-price').text(display);
-      $el('pdp_dynamic_price_inr').val(String(priceInr));
-      $el('pdp_converted_price').val(String(converted));
-
-      window.__pdpJewelrySelection = {
-        product_id: sel.product_id,
-        karat: sel.karat,
-        shape: sel.shape,
-        color: sel.color,
-        clarity: sel.quality,
-        selected_carat: sel.selected_carat,
-        dynamic_price_inr: priceInr,
-        converted_price: converted,
-        currency_code: getCurrencyParts().code,
-      };
-
-      $('.details-page-top-right-content .qtyValue').trigger('keyup');
-      $(document).trigger('pdp-jewelry-price-updated', [window.__pdpJewelrySelection]);
-      console.log('[PDP Price] DOM updated', { display: display, inr: priceInr });
-    }
-
-    function fetchDynamicPrice() {
-      var sel = readSelections();
-      if (!sel.product_id) {
-        console.warn('[PDP Price] #item_id missing — cannot call API');
-        return;
-      }
-
-      var key = payloadKey(sel);
-      if (key === window.__pdpDynamicPriceState.lastSuccessKey) {
-        console.log('[PDP Price] Skip — same as last successful payload');
-        return;
-      }
-
-      if (window.__pdpDynamicPriceState.xhr && window.__pdpDynamicPriceState.xhr.readyState !== 4) {
-        window.__pdpDynamicPriceState.xhr.abort();
-      }
-
-      var payload = {
-        product_id: sel.product_id,
-        karat: sel.karat,
-        quality: sel.quality,
-        color: sel.color,
-        shape: sel.shape,
-        selected_carat: sel.selected_carat,
-      };
-
-      console.log(payload);
-
-      var reqId = ++window.__pdpDynamicPriceState.requestId;
-      setLoading(true);
-
-      window.__pdpDynamicPriceState.xhr = $.ajax({
-        url: API_URL,
-        method: 'POST',
-        contentType: 'application/json',
-        dataType: 'json',
-        data: JSON.stringify(payload),
-        timeout: 15000,
-      })
-        .done(function (response) {
-          if (reqId !== window.__pdpDynamicPriceState.requestId) {
-            return;
-          }
-          console.log(response);
-          var parsed = extractApiPrices(response);
-          if (!parsed) {
-            setPriceError('API response missing final_price');
-            return;
-          }
-          window.__pdpDynamicPriceState.lastSuccessKey = key;
-          applyPrices(parsed.final_price_inr, sel);
-        })
-        .fail(function (xhr, status, err) {
-          if (reqId !== window.__pdpDynamicPriceState.requestId) {
-            return;
-          }
-          var hint = status === 'error' && xhr.status === 0
-            ? 'CORS or network — ensure API allows your site origin, or use same host as storefront'
-            : (xhr.responseText || err || status);
-          setPriceError('API failed: ' + hint);
-          console.error('[PDP Price] API error', { status: status, http: xhr.status, body: xhr.responseText, err: err });
-        })
-        .always(function () {
-          if (reqId === window.__pdpDynamicPriceState.requestId) {
-            setLoading(false);
-          }
-        });
-    }
-
-    function schedulePriceUpdate(source) {
-      console.log('[PDP Price] schedulePriceUpdate', source, readSelections());
-      clearTimeout(window.__pdpDynamicPriceState.debounceTimer);
-      var delay = source === 'carat' ? DEBOUNCE_CARAT_MS : DEBOUNCE_OPTION_MS;
-      window.__pdpDynamicPriceState.debounceTimer = setTimeout(fetchDynamicPrice, delay);
-    }
-
-    function variantSource(evt) {
-      return (evt && evt.detail && evt.detail.source) ? evt.detail.source : 'option';
-    }
-
-    document.addEventListener('pdp-jewelry-variant-change', function (evt) {
-      console.log('[PDP Price] event: pdp-jewelry-variant-change', evt.detail);
-      schedulePriceUpdate(variantSource(evt));
+    var demo = document.getElementById('demo_price');
+    var main = document.getElementById('main_price');
+    var conv = convertBaseToSession(base);
+    if (conv == null) return;
+    var display = formatMoneyDisplay(base);
+    if (demo) demo.value = String(conv);
+    var lineBase = document.getElementById('pdp_line_base_price');
+    if (lineBase) lineBase.value = String(base);
+    if (main) main.textContent = display;
+    document.querySelectorAll('.product-price').forEach(function (el) {
+      el.textContent = display;
     });
 
-    window.PdpDynamicPrice = {
-      refresh: fetchDynamicPrice,
-      readSelections: readSelections,
-      schedule: schedulePriceUpdate,
-    };
+    var wrap = document.getElementById('pdp_compare_price_wrap');
+    if (wrap) wrap.classList.add('d-none');
 
-    window.__pdpDynamicPriceBooted = true;
-    schedulePriceUpdate('init');
-    return true;
-  }
-
-  function tryBoot() {
-    var $ = window.jQuery;
-    if ($ && $.fn) {
-      return boot($);
-    }
-    return false;
-  }
-
-  if (!tryBoot()) {
-    console.warn('[PDP Price] jQuery not ready yet — waiting for footer scripts…');
-    var attempts = 0;
-    var timer = setInterval(function () {
-      attempts += 1;
-      if (tryBoot() || attempts >= 150) {
-        clearInterval(timer);
-        if (attempts >= 150) {
-          console.error('[PDP Price] jQuery never loaded — dynamic pricing disabled');
-        }
+    if (window.jQuery) {
+      var $qty = window.jQuery('.details-page-top-right-content .qtyValue');
+      if ($qty.length) {
+        $qty.trigger('keyup');
       }
-    }, 50);
+    }
+  }
+
+  document.addEventListener('pdp-jewelry-variant-change', applyPdpTierPrice);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyPdpTierPrice);
+  } else {
+    applyPdpTierPrice();
   }
 })();
 </script>

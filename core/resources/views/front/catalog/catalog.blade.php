@@ -8,19 +8,42 @@
                     <div class="product-badge bg-secondary border-default text-body">{{ __('out of stock') }}</div>
                     @endif
                 <div class="product-thumb">
-                    <img class="lazy" src="{{ \App\Helpers\ImageHelper::storageImageUrl($item->thumbnail ?: $item->photo) }}" alt="Product">
+                    @php
+                        $images = json_decode($item->itemPrice->image ?? '[]', true);
+
+                        $firstImage = $images[0]['image'] ?? null;
+                    @endphp
+
+                    <div style="font-size:10px;color:red">
+                        {{ $firstImage }}
+                    </div>
+                    @php
+                        $catalogImage = null;
+
+                        if ($item->itemPrice && $item->itemPrice->image) {
+
+                            $metalImages = json_decode($item->itemPrice->image, true);
+
+                            if (
+                                is_array($metalImages)
+                                && isset($metalImages[0]['images'][0])
+                                && !empty($metalImages[0]['images'][0])
+                            ) {
+                                $catalogImage = $metalImages[0]['images'][0];
+                            }
+                        }
+                    @endphp
+                    <img
+                            class="lazy"
+                            src="{{ $catalogImage
+        ? \App\Helpers\ImageHelper::storageImageUrl($catalogImage)
+        : \App\Helpers\ImageHelper::storageImageUrl($item->thumbnail ?: $item->photo) }}"
+                            alt="{{ $item->name }}"
+                    >
+                    <pre>{{ asset('storage/' . $catalogImage) }}</pre>
                     <div class="product-button-group">
                         <a class="product-button wishlist_store" href="{{route('user.wishlist.store',$item->id)}}" title="{{__('Wishlist')}}"><i class="icon-heart"></i></a>
                         @include('includes.item_footer',['sitem' => $item])
-                        <button
-                                type="button"
-                                class="product-button compare-btn"
-                                onclick="addDiamondCompare({{ $item->id }})"
-                                title="{{ __('Compare') }}">
-
-                            <i class="icon-repeat"></i>
-
-                        </button>
                     </div>
                 </div>
                 <div class="product-card-body">
@@ -34,7 +57,7 @@
                         @if ($item->previous_price !=0)
                         <del>{{PriceHelper::setPreviousPrice($item->previous_price)}}</del>
                         @endif
-                        {{PriceHelper::grandCurrencyPrice($item)}}
+                        {{\App\Services\JewelryDynamicPriceService::catalogCurrencyPrice($item)}}
                     </h4>
                 </div>
 
@@ -66,7 +89,7 @@
                                         @if ($item->previous_price !=0)
                                         <del>{{PriceHelper::setPreviousPrice($item->previous_price)}}</del>
                                         @endif
-                                        {{PriceHelper::grandCurrencyPrice($item)}}
+                                        {{\App\Services\JewelryDynamicPriceService::catalogCurrencyPrice($item)}}
                                     </h4>
                                     <p class="text-sm sort_details_show  text-muted hidden-xs-down my-1">
                                     {{ Str::limit(strip_tags($item->sort_details), 100) }}
@@ -98,48 +121,4 @@
     </div>
 </div>
 
-<script src="{{ asset('assets/front/js/catalog.js') }}"></script>
-
-<script>
-
-    window.addDiamondCompare = function(itemId){
-
-        fetch(@json(route('diamonds.compare.add')),{
-            method:'POST',
-            headers:{
-                'Content-Type':'application/json',
-                'X-CSRF-TOKEN':
-                @json(csrf_token()),
-                Accept:'application/json'
-            },
-            body:JSON.stringify({
-                item_id:itemId
-            })
-        })
-            .then(r => r.json())
-            .then(data => {
-                if(data.count !== undefined){
-                    document
-                        .querySelectorAll('.compare_count')
-                        .forEach(el => {
-                            el.textContent =
-                                String(data.count);
-                        });
-                }
-                if(window.iziToast && data.message){
-                    iziToast.success({
-                        message:data.message,
-                        position:'topRight',
-                        timeout:3200
-                    });
-                }
-            })
-            .catch(err => {
-                console.log(err);
-                iziToast.error({
-                    message:'Compare failed',
-                    position:'topRight'
-                });
-            });
-    }
-</script>
+<script type="text/javascript" src="{{asset('assets/front/js/catalog.js')}}"></script>

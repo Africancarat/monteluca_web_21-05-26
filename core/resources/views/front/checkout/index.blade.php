@@ -28,11 +28,8 @@
                             <h3 class="widget-title">{{ __('Items In Your Cart') }}</h3>
                             @foreach ($cart as $key => $item)
                                 <div class="entry">
-                                    <div class="entry-thumb"><a href="{{ route('front.product', $item['slug']) }}">
-{{--                                            <img--}}
-{{--                                                src="{{ url('/core/public/storage/images/' . $item['photo']) }}" alt="Product">--}}
-                                        <img
-                                                src="{{ \App\Helpers\ImageHelper::storageImageUrl($item['photo'] ?? null) }}" alt="Product"></a>
+                                    <div class="entry-thumb"><a href="{{ route('front.product', $item['slug']) }}"><img
+                                                src="{{ url('/core/public/storage/images/' . $item['photo']) }}" alt="Product"></a>
                                     </div>
                                     <div class="entry-content">
                                         <h4 class="entry-title"><a href="{{ route('front.product', $item['slug']) }}">
@@ -56,24 +53,6 @@
                                                 <span class="entry-meta d-inline"><b>{{ $option_name }}</b></span>
                                             </div>
                                             @endforeach
-                                            @php
-                                                $chkMetal = $item['metal_type'] ?? ($item['pdp_metal_type'] ?? null);
-                                                $chkKarat = $item['gold_karat'] ?? ($item['pdp_gold_karat'] ?? null);
-                                                $chkShape = $item['selected_shape'] ?? null;
-                                                $chkCarat = $item['selected_carat'] ?? ($item['carat_weight'] ?? null);
-                                            @endphp
-                                            @if (! empty($chkMetal))
-                                                <div class="entry-meta text-muted small">{{ __('Metal') }}: {{ $chkMetal }}</div>
-                                            @endif
-                                            @if (! empty($chkKarat) && $chkKarat !== $chkMetal)
-                                                <div class="entry-meta text-muted small">{{ __('Gold karat') }}: {{ $chkKarat }}</div>
-                                            @endif
-                                            @if (! empty($chkCarat))
-                                                <div class="entry-meta text-muted small">{{ __('Carat') }}: {{ $chkCarat }}</div>
-                                            @endif
-                                            @if (! empty($chkShape))
-                                                <div class="entry-meta text-muted small">{{ __('Shape') }}: {{ $chkShape }}</div>
-                                            @endif
                                     </div>
                                 </div>
                             @endforeach
@@ -175,5 +154,4 @@
             </div>
         </div>
     </div>
-    @include('includes.checkout-guest-login-guard')
 @endsection

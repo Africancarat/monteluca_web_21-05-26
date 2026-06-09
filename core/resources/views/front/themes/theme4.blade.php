@@ -8,18 +8,11 @@
 
  
 
-    @if ($extra_settings->is_t4_slider == 1)
-        @php
-            $hero = $sliders->first();
-            $heroVideo = ($hero && $hero->link && preg_match('/\.(mp4|webm)(\?|#|$)/i', trim((string) $hero->link))) ? trim((string) $hero->link) : null;
-        @endphp
-        @include('components.luxury-hero', [
-            'heroImage' => $hero ? url('/core/public/storage/images/' . $hero->photo) : asset('images/hero-diamond.jpg'),
-            'heroVideo' => $heroVideo,
-            'title' => $hero ? e($hero->title) . '<br><span class="fs-5 fw-light">' . e($hero->details) . '</span>' : null,
-            'primaryLink' => route('diamonds.index'),
-            'primaryLabel' => __('Explore diamonds'),
-        ])
+    @php
+        $hasHomeHeroVideo = is_file(public_path('storage/images/African_Carat_Ads_3.mp4'));
+    @endphp
+    @if ($extra_settings->is_t4_slider == 1 || $hasHomeHeroVideo)
+        @include('components.home-luxury-hero')
     @endif
 
     @if ($extra_settings->is_t4_featured_banner == 1)
@@ -28,27 +21,27 @@
                 <div class="row">
                     <div class="col-lg-3 col-md-3 col-sm-12">
                         <a href="{{isset($home_page4_banner['url1']) ? $home_page4_banner['url1'] : ''}}" class="h3-category">
-                            <img class="lazy" data-src="{{url('/core/public/storage/images/'.$home_page4_banner['img1'])}}" alt="">
+                            <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::theme4FeaturedUrl($home_page4_banner['img1'] ?? null, 1) }}" alt="{{ $home_page4_banner['label1'] ?? '' }}">
                             <h4>{{isset($home_page4_banner['label1']) ? $home_page4_banner['label1'] : ''}}</h4>
                         </a>
                         <a href="{{isset($home_page4_banner['url2']) ? $home_page4_banner['url2'] : ''}}" class="h3-category">
-                            <img class="lazy" data-src="{{url('/core/public/storage/images/'.$home_page4_banner['img2'])}}" alt="">
+                            <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::theme4FeaturedUrl($home_page4_banner['img2'] ?? null, 2) }}" alt="{{ $home_page4_banner['label2'] ?? '' }}">
                             <h4>{{isset($home_page4_banner['label2']) ? $home_page4_banner['label2'] : ''}}</h4>
                         </a>
                     </div>
                     <div class="col-lg-6 col-md-6 col-sm-12 middleImage">
                         <a href="{{isset($home_page4_banner['url3']) ? $home_page4_banner['url3'] : ''}}" class="h3-category">
-                            <img class="lazy" data-src="{{url('/core/public/storage/images/'.$home_page4_banner['img3'])}}" alt="">
+                            <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::theme4FeaturedUrl($home_page4_banner['img3'] ?? null, 3) }}" alt="{{ $home_page4_banner['label3'] ?? '' }}">
                             <h4>{{isset($home_page4_banner['label3']) ? $home_page4_banner['label3'] : ''}}</h4>
                         </a>
                     </div>
                     <div class="col-lg-3 col-md-3 col-sm-12">
                         <a href="{{isset($home_page4_banner['url4']) ? $home_page4_banner['url4'] : ''}}" class="h3-category">
-                            <img src="{{url('/core/public/storage/images/'.$home_page4_banner['img4'])}}" alt="">
+                            <img src="{{ \App\Helpers\HomePageImageHelper::theme4FeaturedUrl($home_page4_banner['img4'] ?? null, 4) }}" alt="{{ $home_page4_banner['label4'] ?? '' }}">
                             <h4>{{isset($home_page4_banner['label4']) ? $home_page4_banner['label4'] : ''}}</h4>
                         </a>
                         <a href="{{isset($home_page4_banner['url5']) ? $home_page4_banner['url5'] : ''}}" class="h3-category">
-                            <img src="{{url('/core/public/storage/images/'.$home_page4_banner['img5'])}}" alt="">
+                            <img src="{{ \App\Helpers\HomePageImageHelper::theme4FeaturedUrl($home_page4_banner['img5'] ?? null, 5) }}" alt="{{ $home_page4_banner['label5'] ?? '' }}">
                             <h4>{{isset($home_page4_banner['label5']) ? $home_page4_banner['label5'] : ''}}</h4>
                         </a>
                     </div>
@@ -134,6 +127,22 @@
         @include('front.partials.home-first-banner-strip', ['banner_first' => $banner_first])
     @endif
 
+    @php
+        $sb = $split_path_banner ?? [];
+        $hasAfricanCaratEngagementImage = is_file(public_path('storage/images/African carat/2.png'));
+        $showSplitBanner = $hasAfricanCaratEngagementImage
+            || (($extra_settings->is_t3_split_path_banner ?? 0) == 1
+                && (
+                    ($sb['headline'] ?? '') !== '' || ($sb['kicker'] ?? '') !== '' || ($sb['body'] ?? '') !== ''
+                    || ($sb['fg_image'] ?? '') !== '' || ($sb['bg_image'] ?? '') !== ''
+                    || ($sb['btn1_label'] ?? '') !== '' || ($sb['btn2_label'] ?? '') !== ''
+                ));
+    @endphp
+    @if ($showSplitBanner)
+        @include('front.partials.home-split-path-banner', ['split' => $sb])
+    @endif
+
+    @include('front.partials.home-trust-band')
 
     @if ($extra_settings->is_t4_flashdeal == 1)
         <div class="flash-sell-new-section mt-50">
@@ -208,7 +217,7 @@
             <div class="row gx-3">
                 <div class="col-md-4">
                     <a href="{{$banner_secend['url1']}}" class="genius-banner">
-                        <img class="lazy" data-src="{{ url('/core/public/storage/images/'.$banner_secend['img1']) }}" alt="">
+                        <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::resolveFromAdmin($banner_secend['img1'] ?? '', config('home_page_images.banner_second_row.1', [])) }}" alt="{{ $banner_secend['title1'] ?? '' }}">
                         <div class="inner-content">
                             @if (isset($banner_secend['subtitle1']))
                                 <p>{{$banner_secend['subtitle1']}}</p>
@@ -222,7 +231,7 @@
                 </div>
                 <div class="col-md-4">
                     <a href="{{$banner_secend['url2']}}" class="genius-banner">
-                        <img class="lazy" data-src="{{ url('/core/public/storage/images/'.$banner_secend['img2']) }}" alt="">
+                        <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::resolveFromAdmin($banner_secend['img2'] ?? '', config('home_page_images.banner_second_row.2', [])) }}" alt="{{ $banner_secend['title2'] ?? '' }}">
                         <div class="inner-content">
                             @if (isset($banner_secend['subtitle2']))
                                 <p>{{$banner_secend['subtitle2']}}</p>
@@ -236,7 +245,7 @@
                 </div>
                 <div class="col-md-4">
                     <a href="{{$banner_secend['url3']}}" class="genius-banner">
-                        <img class="lazy" data-src="{{ url('/core/public/storage/images/'.$banner_secend['img3']) }}" alt="">
+                        <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::resolveFromAdmin($banner_secend['img3'] ?? '', config('home_page_images.banner_second_row.3', [])) }}" alt="{{ $banner_secend['title3'] ?? '' }}">
                         <div class="inner-content">
                             @if (isset($banner_secend['subtitle3']))
                                 <p>{{$banner_secend['subtitle3']}} </p>
@@ -341,7 +350,7 @@
             <div class="row gx-3">
                 <div class="col-md-6">
                     <a href="{{$banner_third['url1']}}" class="genius-banner">
-                        <img class="lazy" data-src="{{ url('/core/public/storage/images/'.$banner_third['img1']) }}" alt="">
+                        <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::resolveFromAdmin($banner_third['img1'] ?? '', config('home_page_images.banner_third.1', [])) }}" alt="{{ $banner_third['title1'] ?? '' }}">
                         <div class="inner-content">
                             @if (isset($banner_third['subtitle1']))
                                 <p>{{$banner_third['subtitle1']}}</p>
@@ -354,7 +363,7 @@
                 </div>
                 <div class="col-md-6">
                     <a href="{{$banner_third['url2']}}" class="genius-banner">
-                        <img class="lazy" data-src="{{ url('/core/public/storage/images/'.$banner_third['img2']) }}" alt="">
+                        <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::resolveFromAdmin($banner_third['img2'] ?? '', config('home_page_images.banner_third.2', [])) }}" alt="{{ $banner_third['title2'] ?? '' }}">
                         <div class="inner-content">
                             @if (isset($banner_third['subtitle2']))
                                 <p>{{$banner_third['subtitle2']}} </p>
@@ -387,7 +396,7 @@
                                 <div class="slider-item">
                                     <a href="{{route('front.blog.details',$post->slug)}}" class="blog-post">
                                         <div class="post-thumb">
-                                            <img class="lazy" data-src="{{ url('/core/public/storage/images/' . json_decode($post->photo, true)[array_key_first(json_decode($post->photo, true))]) }}"
+                                            <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::blogPostUrl($post->photo) }}"
                                                 alt="Blog Post">
                                             </div>
                                         <div class="post-body">
@@ -429,7 +438,7 @@
                             <div class="slider-item">
                                 <a class="text-center" href="{{ route('front.catalog') . '?brand=' . $brand->slug }}">
                                     <img class="d-block hi-50 lazy"
-                                    data-src="{{ url('/core/public/storage/images/' . $brand->photo) }}"
+                                    data-src="{{ \App\Helpers\HomePageImageHelper::brandUrl($brand->photo) }}"
                                         alt="{{ $brand->name }}" title="{{ $brand->name }}">
                                 </a>
                             </div>
@@ -448,7 +457,7 @@
                     @foreach ($services as $service)
                         <div class="col-lg-3 col-sm-6 text-center mb-30">
                             <div class="single-service single-service2">
-                                <img class="lazy" data-src="{{ url('/core/public/storage/images/'.$service->photo) }}" alt="Shipping">
+                                <img class="lazy" data-src="{{ \App\Helpers\HomePageImageHelper::serviceUrl($service->photo, $loop->index) }}" alt="{{ $service->title }}">
                                 <div class="content">
                                     <h6 class="mb-2">{{ $service->title }}</h6>
                                     <p class="text-sm text-muted mb-0">{{ $service->details }}</p>
